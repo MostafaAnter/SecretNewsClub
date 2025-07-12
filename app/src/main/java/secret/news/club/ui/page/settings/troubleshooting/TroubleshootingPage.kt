@@ -182,7 +182,7 @@ private fun preferenceFileLauncher(
     context: Context,
     launcher: ManagedActivityResultLauncher<String, Uri?>,
 ) {
-    launcher.launch("Read-You-" +
+    launcher.launch("News-Club-" +
             "${context.getCurrentVersion()}-settings-" +
             "${Date().toString(DateFormat.YYYY_MM_DD_DASH_HH_MM_SS_DASH)}.json")
 }
