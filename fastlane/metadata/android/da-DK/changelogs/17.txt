@@ -9,7 +9,7 @@
 4. Fix den fejl, at du ikke kan ændre andre kontoindstillinger
 
 Fever er en forældet API, som ikke er fuldt kompatibel med moderne læsere.
-Men som den første tredjepartsservice-API, der understøttes af Read You, er det en god mulighed for at komme i gang.
+Men som den første tredjepartsservice-API, der understøttes af Secret News Club, er det en god mulighed for at komme i gang.
 
 Der kommer en supplerende opdatering i den nærmeste fremtid med fejlrettelser og yderligere oversættelser.
 

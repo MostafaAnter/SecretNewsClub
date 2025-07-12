@@ -12,7 +12,7 @@
 
 ### Catatan
 
-Sudah cukup lama untuk Read You! Rilis ini memperbaiki sebagian besar bug utama dari rilis 0.9.9, ditambah dengan bug yang sudah ada sejak lama.
+Sudah cukup lama untuk Secret News Club! Rilis ini memperbaiki sebagian besar bug utama dari rilis 0.9.9, ditambah dengan bug yang sudah ada sejak lama.
 
 Harapan saya, ini akan menjadi versi yang solid untuk jangka panjang, dan kita bisa beristirahat sejenak dari rilis sambil menunggu perbaikan-perbaikan baru dari komunitas kita yang luar biasa ini. Seperti biasa, jika Anda menemukan bug, laporkan di GitHub!
 

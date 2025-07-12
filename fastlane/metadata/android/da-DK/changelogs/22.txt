@@ -12,7 +12,7 @@
 
 ### Noter
 
-Det har været noget af en uge for Read You! Denne udgivelse retter de fleste af de øvrige store fejl fra udgivelse 0.9.9, plus en, der har eksisteret i lang tid.
+Det har været noget af en uge for Secret News Club! Denne udgivelse retter de fleste af de øvrige store fejl fra udgivelse 0.9.9, plus en, der har eksisteret i lang tid.
 
 Mit håb er, at dette bliver et solidt build på længere sigt, og at vi kan holde en lille pause fra udgivelser, mens vi venter på nye forbedringer fra vores vidunderlige fællesskab. Som altid, hvis du støder på en fejl, så rapporter den på Github!
 

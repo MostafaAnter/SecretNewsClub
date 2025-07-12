@@ -10,7 +10,7 @@
 
 5. Andre detaljerede ændringer.
 
-Disse tre ting er den næste prioritet for Read You
+Disse tre ting er den næste prioritet for Secret News Club
 
 1. Nogle kontoindstillinger (f.eks. synkroniseringsinterval).
 

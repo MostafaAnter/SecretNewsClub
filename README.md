@@ -22,7 +22,7 @@
 </div>
 
 <div align="center">
-    <h1>Read You</h1>
+    <h1>Secret News Club</h1>
     <p>An Android RSS reader presented in <a target="_blank" href="https://m3.material.io/">Material You</a> style.</p>
     <p>English&nbsp;&nbsp;|&nbsp;&nbsp;
     <a target="_blank" href="https://github.com/Ashinch/ReadYou/blob/main/README-de.md">Deutsch</a>&nbsp;&nbsp;|&nbsp;&nbsp;
@@ -42,7 +42,7 @@
 
 ## Features
 
-**Read You** is an Android RSS reader presented in [Material You](https://m3.material.io/) style.
+**Secret News Club** is an Android RSS reader presented in [Material You](https://m3.material.io/) style.
 
 The following are the progress made so far and the goals to be worked on in the near future:
 
@@ -58,7 +58,7 @@ The following are the progress made so far and the goals to be worked on in the 
 
 ## Integration
 
-**Read You** integrates with some of third-party service APIs to support you in using your existing cloud accounts as data sources.
+**Secret News Club** integrates with some of third-party service APIs to support you in using your existing cloud accounts as data sources.
 
 - [x] Fever
 - [x] Google Reader
@@ -96,7 +96,7 @@ Choose the latest workflow from the GitHub Actions page and download the artifac
 
 ## Sponsorship
 
-**Read You** is a free open source software that benefits from the open source community and every user can enjoy it's full functionality for free, so if you appreciate my current work, you can buy me a cup of coffee.☕️
+**Secret News Club** is a free open source software that benefits from the open source community and every user can enjoy it's full functionality for free, so if you appreciate my current work, you can buy me a cup of coffee.☕️
 
 [<img src="https://s1.ax1x.com/2023/01/12/pSnHqpQ.png" alt="donate" height="80">](https://ash7.io/sponsor)
 
@@ -104,7 +104,7 @@ Thanks for all the love and support.❤️
 
 ## Localization
 
-Thank you to each of the **Read You** translators, and if you would like to contribute, please submit a translation via [Weblate](https://hosted.weblate.org/engage/readyou/).
+Thank you to each of the **Secret News Club** translators, and if you would like to contribute, please submit a translation via [Weblate](https://hosted.weblate.org/engage/readyou/).
 
 [<img src="https://hosted.weblate.org/widgets/readyou/-/horizontal-auto.svg" alt="" />](https://hosted.weblate.org/engage/readyou/)
 
@@ -112,9 +112,9 @@ Thank you to each of the **Read You** translators, and if you would like to cont
 
 > Welcome to open a [pull request](https://github.com/Ashinch/ReadYou/pulls). [GitHub Actions](https://github.com/Ashinch/ReadYou/actions) automatically packages all flavors of apk files for each commit.
 
-**Read You** is based on [Jetpack Compose](https://developer.android.com/jetpack/compose) toolkit for building Android's native UI.
+**Secret News Club** is based on [Jetpack Compose](https://developer.android.com/jetpack/compose) toolkit for building Android's native UI.
 
-1. First you need to get the source code of **Read You**.
+1. First you need to get the source code of **Secret News Club**.
 
    ```shell
    git clone https://github.com/Ashinch/ReadYou.git
@@ -147,16 +147,16 @@ Thank you to each of the **Read You** translators, and if you would like to cont
 
 [<img src="https://avatars.githubusercontent.com/u/76829190?v=4" width="180" height="180" style="display: block; border: 1px solid #f5f5f5; border-radius: 9999px;"/>](https://github.com/Kyant0)
 
-Thanks to **@Kyant0** for the design inspiration and Monet engine implementation for **Read You**.
+Thanks to **@Kyant0** for the design inspiration and Monet engine implementation for **Secret News Club**.
 
 [<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" width="200" alt="Copyright © 2000-2023 JetBrains s.r.o. JetBrains and the JetBrains logo are registered trademarks of JetBrains s.r.o."/>](https://www.jetbrains.com/)
 
-Thanks to **JetBrains** for allocating free open-source licences for IDEs for **Read You**.
+Thanks to **JetBrains** for allocating free open-source licences for IDEs for **Secret News Club**.
 
 [<img src="https://hosted.weblate.org/widgets/readyou/-/287x66-white.png"  width="200"/>](https://hosted.weblate.org/engage/readyou/)
 
-Thanks to **Weblate** for providing free hosting of open source projects for **Read You**.
+Thanks to **Weblate** for providing free hosting of open source projects for **Secret News Club**.
 
 ## License
 
-GNU GPL v3.0 © [Read You](https://github.com/Ashinch/ReadYou/blob/main/LICENSE)
+GNU GPL v3.0 © [Secret News Club](https://github.com/Ashinch/ReadYou/blob/main/LICENSE)

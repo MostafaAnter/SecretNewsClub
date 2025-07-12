@@ -12,6 +12,6 @@
 
 ### Notatki
 
-To był niezły tydzień dla Read You! Ta wersja naprawia większość pozostałych głównych błędów z wersji 0.9.9, a także jeden, który występował od dłuższego czasu.
+To był niezły tydzień dla Secret News Club! Ta wersja naprawia większość pozostałych głównych błędów z wersji 0.9.9, a także jeden, który występował od dłuższego czasu.
 
 Mam nadzieję, że będzie to solidna, długoterminowa wersja i że będziemy mogli zrobić sobie przerwę od wydań, czekając na nowe ulepszenia od naszej wspaniałej społeczności. Jak zawsze, jeśli natrafisz na błąd, zgłoś go na Github!
