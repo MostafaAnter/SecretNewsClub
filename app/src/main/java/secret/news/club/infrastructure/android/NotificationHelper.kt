@@ -42,11 +42,11 @@ class NotificationHelper @Inject constructor(
         )
         feedWithArticle.articles.forEach { article ->
             val builder = NotificationCompat.Builder(context, NotificationGroupName.ARTICLE_UPDATE)
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.drawable.ic_launcher_round)
                 .setLargeIcon(
                     (BitmapFactory.decodeResource(
                         context.resources,
-                        R.drawable.ic_notification
+                        R.drawable.ic_launcher_round
                     ))
                 )
                 .setContentTitle(article.title)
@@ -94,11 +94,11 @@ class NotificationHelper @Inject constructor(
             notificationManager.notify(
                 Random().nextInt() + feedWithArticle.feed.id.hashCode(),
                 NotificationCompat.Builder(context, NotificationGroupName.ARTICLE_UPDATE)
-                    .setSmallIcon(R.drawable.ic_notification)
+                    .setSmallIcon(R.drawable.ic_launcher_round)
                     .setLargeIcon(
                         (BitmapFactory.decodeResource(
                             context.resources,
-                            R.drawable.ic_notification
+                            R.drawable.ic_launcher_round
                         ))
                     )
                     .setStyle(

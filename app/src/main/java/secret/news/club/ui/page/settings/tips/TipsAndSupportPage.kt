@@ -220,9 +220,8 @@ fun TipsAndSupportPage(
                         ) {
                             Image(
                                 modifier = Modifier.size(90.dp),
-                                painter = painterResource(R.drawable.ic_launcher_pure),
+                                painter = painterResource(R.mipmap.ic_launcher_round),
                                 contentDescription = stringResource(R.string.read_you),
-                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface alwaysLight true),
                             )
                         }
                         Spacer(modifier = Modifier.height(48.dp))

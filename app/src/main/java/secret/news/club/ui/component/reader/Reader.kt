@@ -39,7 +39,7 @@ fun LazyListScope.Reader(
         subheadUpperCase = subheadUpperCase,
         baseUrl = link,
         onImageClick = onImageClick,
-        imagePlaceholder = R.drawable.ic_launcher_foreground,
+        imagePlaceholder = R.drawable.ic_launcher_round,
         onLinkClick = onLinkClick
     )
 }
