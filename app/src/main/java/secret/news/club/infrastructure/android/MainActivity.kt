@@ -21,6 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.lang.reflect.Field
 import javax.inject.Inject
 import secret.news.club.domain.service.AccountService
+import secret.news.club.domain.service.DefaultSubscriptionManager
 import secret.news.club.infrastructure.compose.ProvideCompositionLocals
 import secret.news.club.infrastructure.preference.AccountSettingsProvider
 import secret.news.club.infrastructure.preference.LanguagesPreference
@@ -40,10 +41,13 @@ class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var accountService: AccountService
 
+    @Inject lateinit var defaultSubscriptionManager: DefaultSubscriptionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.i("RLog", "onCreate: ${ProfileInstallerInitializer().create(this)}")
 
+        defaultSubscriptionManager.addDefaultSubscriptions()
         enableEdgeToEdge()
 
         // Set the language
