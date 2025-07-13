@@ -40,15 +40,12 @@ import secret.news.club.ui.component.base.FeedbackIconButton
 import secret.news.club.ui.component.base.RYScaffold
 import secret.news.club.ui.ext.getCurrentVersion
 import secret.news.club.ui.page.common.RouteName
-import secret.news.club.ui.page.settings.tips.UpdateDialog
-import secret.news.club.ui.page.settings.tips.UpdateViewModel
 import secret.news.club.ui.theme.palette.onLight
 import java.util.Locale
 
 @Composable
 fun SettingsPage(
     navController: NavHostController,
-    updateViewModel: UpdateViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val newVersion = LocalNewVersionNumber.current
@@ -70,35 +67,6 @@ fun SettingsPage(
             LazyColumn {
                 item {
                     DisplayText(text = stringResource(R.string.settings), desc = "")
-                }
-                item {
-                    Box {
-                        if (newVersion.whetherNeedUpdate(currentVersion, skipVersion)) {
-                            Banner(
-                                modifier = Modifier.zIndex(1f),
-                                title = stringResource(R.string.get_new_updates),
-                                desc = stringResource(
-                                    R.string.get_new_updates_desc,
-                                    newVersion.toString(),
-                                ),
-                                icon = Icons.Outlined.Lightbulb,
-                                action = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Close,
-                                        contentDescription = stringResource(R.string.close),
-                                    )
-                                },
-                            ) {
-                                updateViewModel.showDialog()
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                        // Banner(
-                        //     title = stringResource(R.string.in_coding),
-                        //     desc = stringResource(R.string.coming_soon),
-                        //     icon = Icons.Outlined.Lightbulb,
-                        // )
-                    }
                 }
                 item {
                     SelectableSettingGroupItem(
@@ -174,5 +142,4 @@ fun SettingsPage(
         }
     )
 
-    UpdateDialog()
 }

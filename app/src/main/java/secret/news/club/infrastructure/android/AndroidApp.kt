@@ -163,6 +163,6 @@ class AndroidApp : Application(), Configuration.Provider {
                 if (it.exists()) it.del()
             }
         }
-        appService.checkUpdate(showToast = false)
+      //  appService.checkUpdate(showToast = false)
     }
 }

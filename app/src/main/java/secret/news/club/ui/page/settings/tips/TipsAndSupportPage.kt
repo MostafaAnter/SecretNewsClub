@@ -95,7 +95,6 @@ private val ShapeGacha by lazy {
 @Composable
 fun TipsAndSupportPage(
     navController: NavHostController,
-    updateViewModel: UpdateViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -181,22 +180,7 @@ fun TipsAndSupportPage(
                                     view.playSoundEffect(SoundEffectConstants.CLICK)
                                 },
                                 onTap = {
-                                    updateViewModel.checkUpdate(
-                                        {
-                                            context.showToast(context.getString(R.string.checking_updates))
-                                            context.dataStore.put(
-                                                DataStoreKey.skipVersionNumber,
-                                                ""
-                                            )
-                                        },
-                                        {
-                                            if (!it) {
-                                                context.showToast(
-                                                    context.getString(R.string.is_latest_version)
-                                                )
-                                            }
-                                        }
-                                    )
+                                    context.showToast(context.getString(R.string.is_latest_version))
                                 }
                             )
                         },
@@ -287,28 +271,12 @@ fun TipsAndSupportPage(
                                     OpenLinkPreference.AutoPreferCustomTabs
                                 )
                             })
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        // Help
-                        RoundIconButton(
-                            RoundIconButtonType.Help(
-                                backgroundColor = MaterialTheme.colorScheme.secondaryContainer alwaysLight true,
-                            ) {
-                                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                                view.playSoundEffect(SoundEffectConstants.CLICK)
-                                context.openURL(
-                                    context.getString(R.string.wiki_link),
-                                    OpenLinkPreference.AutoPreferCustomTabs
-                                )
-                            })
                     }
                     Spacer(modifier = Modifier.height(48.dp))
                 }
             }
         }
     )
-
-    UpdateDialog()
     if (showSponsorDialog) {
         SponsorDialog { showSponsorDialog = false }
     }

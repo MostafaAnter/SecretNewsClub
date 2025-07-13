@@ -202,7 +202,6 @@ fun FeedsPage(
                         imageVector = Icons.Outlined.Settings,
                         contentDescription = stringResource(R.string.settings),
                         tint = MaterialTheme.colorScheme.onSurface,
-                        showBadge = newVersion.whetherNeedUpdate(currentVersion, skipVersion),
                     ) {
                         navController.navigate(RouteName.SETTINGS) {
                             launchSingleTop = true
