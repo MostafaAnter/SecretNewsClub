@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="read_you">نادي الاخبار</string>
     <string name="share">شارِك</string>
     <string name="unsubscribe">ألغِ الاشتراك</string>
     <string name="search_for">ابحث عن عناصر %1$s</string>
