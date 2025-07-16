@@ -71,6 +71,7 @@ import secret.news.club.infrastructure.preference.LocalFeedsTopBarTonalElevation
 import secret.news.club.infrastructure.preference.LocalNewVersionNumber
 import secret.news.club.infrastructure.preference.LocalSkipVersionNumber
 import secret.news.club.ui.component.FilterBar
+import secret.news.club.ui.component.base.AdBanner
 import secret.news.club.ui.component.base.DisplayText
 import secret.news.club.ui.component.base.FeedbackIconButton
 import secret.news.club.ui.component.base.RYScaffold
@@ -315,6 +316,11 @@ fun FeedsPage(
                             }
 
                             feeds.forEachIndexed { index, feed ->
+
+                                if ((index == 5 || index == 10) && groupsVisible.getOrPut(group.id, groupListExpand::value)) {
+                                    AdBanner()
+                                }
+
                                 FeedItem(
                                     feed = feed,
                                     isLastItem = { index == feeds.lastIndex },

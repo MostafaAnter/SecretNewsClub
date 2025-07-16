@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -86,6 +87,7 @@ import secret.news.club.infrastructure.preference.LocalSortUnreadArticles
 import secret.news.club.infrastructure.preference.PullToLoadNextFeedPreference
 import secret.news.club.infrastructure.preference.SortUnreadArticlesPreference
 import secret.news.club.ui.component.FilterBar
+import secret.news.club.ui.component.base.AdBanner
 import secret.news.club.ui.component.base.FeedbackIconButton
 import secret.news.club.ui.component.base.RYExtensibleVisibility
 import secret.news.club.ui.component.base.RYScaffold
@@ -704,6 +706,9 @@ fun FlowPage(
                 loadAction = currentLoadAction,
                 modifier = Modifier.padding(bottom = 36.dp),
             )
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            AdBanner(modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp))
         }
     }
 }

@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.profileinstaller.ProfileInstallerInitializer
 import coil.ImageLoader
+import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 import java.lang.reflect.Field
 import javax.inject.Inject
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MobileAds.initialize(this) {}
         Log.i("RLog", "onCreate: ${ProfileInstallerInitializer().create(this)}")
 
         defaultSubscriptionManager.addDefaultSubscriptions()

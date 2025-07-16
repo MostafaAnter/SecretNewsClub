@@ -190,4 +190,5 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.junit.jupiter)
     testImplementation(libs.mockito.kotlin)
+    implementation(libs.play.services.ads)
 }

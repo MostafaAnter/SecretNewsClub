@@ -15,6 +15,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.ExperimentalMaterialApi
@@ -37,11 +38,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import secret.news.club.R
+import secret.news.club.ui.component.base.AdBanner
 import secret.news.club.infrastructure.android.TextToSpeechManager
 import secret.news.club.infrastructure.preference.LocalPullToSwitchArticle
 import secret.news.club.infrastructure.preference.LocalReadingAutoHideToolbar
@@ -301,6 +304,9 @@ fun ReadingPage(
                             )
                         }
                     )
+                    if (isShowToolBar) {
+                        AdBanner(modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp))
+                    }
                 }
             }
         }
