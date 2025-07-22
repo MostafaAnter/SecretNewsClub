@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Balance
 import androidx.compose.material.icons.rounded.TipsAndUpdates
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -271,6 +272,20 @@ fun TipsAndSupportPage(
                                     OpenLinkPreference.AutoPreferCustomTabs
                                 )
                             })
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        // Contact
+                        RoundIconButton(
+                            RoundIconButtonType.Contact(
+                                backgroundColor = MaterialTheme.colorScheme.primaryContainer alwaysLight true,
+                            ) {
+                                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                view.playSoundEffect(SoundEffectConstants.CLICK)
+                                context.openURL(
+                                    "mailto:" + context.getString(R.string.email_address),
+                                    OpenLinkPreference.AutoPreferCustomTabs
+                                )
+                            })
                     }
                     Spacer(modifier = Modifier.height(48.dp))
                 }
@@ -332,6 +347,18 @@ sealed class RoundIconButtonType(
     )
 
     @Immutable
+    data class Contact(
+        val desc: Int = R.string.contact_us,
+        override val backgroundColor: Color,
+        override val onClick: () -> Unit = {},
+    ) : RoundIconButtonType(
+        iconVector = Icons.Rounded.Email,
+        descResource = desc,
+        backgroundColor = backgroundColor,
+        onClick = onClick,
+    )
+
+    @Immutable
     data class Help(
         val desc: Int = R.string.help,
         override val offset: Modifier = Modifier.offset(x = (3).dp),
@@ -357,7 +384,7 @@ private fun RoundIconButton(type: RoundIconButtonType) {
         onClick = { type.onClick() }
     ) {
         when (type) {
-            is RoundIconButtonType.Sponsor, is RoundIconButtonType.Help -> {
+            is RoundIconButtonType.Sponsor, is RoundIconButtonType.Help, is RoundIconButtonType.Contact -> {
                 Icon(
                     modifier = type.offset.size(type.size),
                     imageVector = type.iconVector!!,
