@@ -13,7 +13,7 @@ aboutLibsRelease = "11.1.1"
 accompanist = "0.34.0"
 
 # AndroidX
-activityCompose = "1.10.1"
+activityCompose = "1.9.0"
 appcompat = "1.7.0"
 browser = "1.8.0"
 coreKtx = "1.16.0"
