@@ -52,6 +52,7 @@ import secret.news.club.infrastructure.preference.LocalReadingBoldCharacters
 import secret.news.club.infrastructure.preference.LocalReadingTextLineHeight
 import secret.news.club.infrastructure.preference.not
 import secret.news.club.ui.ext.collectAsStateValue
+import secret.news.club.ui.ext.extractDomain
 import secret.news.club.ui.ext.showToast
 import secret.news.club.ui.page.home.reading.tts.TtsButton
 import kotlin.math.abs
@@ -225,7 +226,7 @@ fun ReadingPage(
                                             ),
                                         contentPadding = paddings,
                                         content = content.text ?: "",
-                                        feedName = feedName,
+                                        feedName = link.extractDomain() ?: feedName,
                                         title = title.toString(),
                                         author = author,
                                         link = link,
