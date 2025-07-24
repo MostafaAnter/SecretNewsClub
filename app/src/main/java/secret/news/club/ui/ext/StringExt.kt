@@ -2,6 +2,7 @@ package secret.news.club.ui.ext
 
 import android.text.Html
 import android.util.Base64
+import androidx.compose.ui.text.capitalize
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.text.Bidi
@@ -60,4 +61,22 @@ fun String?.extractDomain(): String? {
     val domainRegex = Regex("[\\w\\d.-]+\\.[\\w\\d.-]+")
     val domainMatchResult = domainRegex.find(this)
     return domainMatchResult?.value
+}
+
+fun String?.extractHost(): String? {
+    return try {
+        val uri = java.net.URI(this)
+        val host = uri.host ?: return null
+
+        val cleanHost = if (host.startsWith("www.")) host.substring(4) else host
+
+        val parts = cleanHost.split(".")
+        when {
+            parts.size >= 2 -> parts[parts.size - 2].replaceFirstChar{ it.uppercase() }
+            parts.size == 1 -> parts[0].replaceFirstChar{ it.uppercase() }
+            else -> null
+        }
+    } catch (e: Exception) {
+        null
+    }
 }
