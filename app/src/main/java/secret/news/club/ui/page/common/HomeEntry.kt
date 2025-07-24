@@ -46,6 +46,7 @@ import secret.news.club.ui.page.settings.interaction.InteractionPage
 import secret.news.club.ui.page.settings.languages.LanguagesPage
 import secret.news.club.ui.page.settings.tips.LicenseListPage
 import secret.news.club.ui.page.settings.tips.TipsAndSupportPage
+import secret.news.club.ui.page.settings.contact.ContactUsPage
 import secret.news.club.ui.page.settings.troubleshooting.TroubleshootingPage
 import secret.news.club.ui.page.startup.StartupPage
 import secret.news.club.ui.theme.AppTheme
@@ -206,6 +207,11 @@ fun HomeEntry(
                 }
                 animatedComposable(route = RouteName.LICENSE_LIST) {
                     LicenseListPage(navController)
+                }
+
+                // Contact Us
+                animatedComposable(route = RouteName.CONTACT_US) {
+                    ContactUsPage(navController)
                 }
             }
         }

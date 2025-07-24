@@ -15,7 +15,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextDecoration
 import secret.news.club.infrastructure.preference.LocalReadingFonts
 import secret.news.club.infrastructure.preference.LocalReadingTitleAlign
 import secret.news.club.infrastructure.preference.LocalReadingTitleBold
@@ -88,9 +90,11 @@ fun Metadata(
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = feedName,
-            color = labelColor,
-            style = MaterialTheme.typography.labelMedium.merge(fontFamily = fontFamily),
-            textAlign = titleAlign,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.labelMedium
+                .merge(fontFamily = fontFamily)
+                .copy(textDecoration = TextDecoration.Underline),
+            textAlign = TextAlign.Center,
         )
     }
 }

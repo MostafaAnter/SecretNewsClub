@@ -43,4 +43,7 @@ object RouteName {
     // Tips & Support
     const val TIPS_AND_SUPPORT = "tips_and_support"
     const val LICENSE_LIST = "license_list"
+    
+    // Contact Us
+    const val CONTACT_US = "contact_us"
 }

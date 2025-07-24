@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.TipsAndUpdates
 import androidx.compose.material.icons.outlined.TouchApp
+import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -130,6 +131,17 @@ fun SettingsPage(
                         icon = Icons.Outlined.TipsAndUpdates,
                     ) {
                         navController.navigate(RouteName.TIPS_AND_SUPPORT) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+                item {
+                    SelectableSettingGroupItem(
+                        title = stringResource(R.string.contact_us),
+                        desc = stringResource(R.string.email_address),
+                        icon = Icons.Outlined.Email,
+                    ) {
+                        navController.navigate(RouteName.CONTACT_US) {
                             launchSingleTop = true
                         }
                     }
