@@ -90,7 +90,7 @@ fun Metadata(
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = feedName,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.labelMedium
                 .merge(fontFamily = fontFamily)
                 .copy(textDecoration = TextDecoration.Underline),
