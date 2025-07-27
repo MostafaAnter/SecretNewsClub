@@ -40,7 +40,7 @@ class DefaultSubscriptionManager @Inject constructor(
                             searchedFeed = searchedFeed,
                             feedLink = feedUrl,
                             groupId = firstGroupId,
-                            isNotification = true,
+                            isNotification = feedUrl.endsWith("97", true),
                             isFullContent = true,
                             isBrowser = false,
                         )

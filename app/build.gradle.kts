@@ -33,9 +33,9 @@ android {
     defaultConfig {
         applicationId = "secret.news.club"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 39
-        versionName = "0.14.6"
+        targetSdk = 36
+        versionCode = 40
+        versionName = "0.14.7"
 
         buildConfigField("String", "USER_AGENT_STRING", "\"ReadYou/${versionName}(${versionCode})\"")
 
