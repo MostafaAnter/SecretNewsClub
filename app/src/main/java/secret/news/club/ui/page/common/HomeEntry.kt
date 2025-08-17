@@ -29,6 +29,7 @@ import secret.news.club.ui.page.home.flow.FlowViewModel
 import secret.news.club.ui.page.home.reading.ReadingPage
 import secret.news.club.ui.page.home.reading.ReadingViewModel
 import secret.news.club.ui.page.settings.SettingsPage
+import secret.news.club.ui.page.settings.CountrySelectionPage
 import secret.news.club.ui.page.settings.accounts.AccountDetailsPage
 import secret.news.club.ui.page.settings.accounts.AccountsPage
 import secret.news.club.ui.page.settings.accounts.AddAccountsPage
@@ -139,6 +140,10 @@ fun HomeEntry(
                 // Settings
                 animatedComposable(route = RouteName.SETTINGS) {
                     SettingsPage(navController)
+                }
+
+                animatedComposable(route = RouteName.COUNTRY_SELECTION) {
+                    CountrySelectionPage(navController)
                 }
 
                 // Accounts

@@ -1,5 +1,6 @@
 package secret.news.club.infrastructure.preference
 
+import android.content.Context
 import androidx.compose.runtime.compositionLocalOf
 import secret.news.club.domain.model.general.Version
 
@@ -82,5 +83,11 @@ data class Settings(
 
     // Languages
     val languages: LanguagesPreference = LanguagesPreference.default,
-)
-
+    val country: CountryPreference? = null,
+) {
+    companion object {
+        fun default(context: Context) = Settings(
+            country = CountryPreference.default(context)
+        )
+    }
+}

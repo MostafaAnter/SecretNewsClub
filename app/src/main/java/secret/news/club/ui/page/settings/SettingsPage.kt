@@ -1,6 +1,5 @@
 package secret.news.club.ui.page.settings
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
@@ -12,13 +11,11 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.TipsAndUpdates
 import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,14 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import secret.news.club.R
+import secret.news.club.infrastructure.preference.LocalCountry
 import secret.news.club.infrastructure.preference.LocalNewVersionNumber
 import secret.news.club.infrastructure.preference.LocalSkipVersionNumber
 import secret.news.club.infrastructure.preference.toDisplayName
-import secret.news.club.ui.component.base.Banner
 import secret.news.club.ui.component.base.DisplayText
 import secret.news.club.ui.component.base.FeedbackIconButton
 import secret.news.club.ui.component.base.RYScaffold
@@ -109,6 +104,18 @@ fun SettingsPage(
                         icon = Icons.Outlined.Language,
                     ) {
                         navController.navigate(RouteName.LANGUAGES) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+                item {
+                    val country = LocalCountry.current
+                    SelectableSettingGroupItem(
+                        title = stringResource(R.string.country),
+                        desc = country?.value?.ifEmpty { stringResource(R.string.country_desc) } ?: stringResource(R.string.country_desc),
+                        icon = Icons.Outlined.Public,
+                    ) {
+                        navController.navigate(RouteName.COUNTRY_SELECTION) {
                             launchSingleTop = true
                         }
                     }

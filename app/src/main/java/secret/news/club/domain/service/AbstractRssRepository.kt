@@ -467,4 +467,11 @@ abstract class AbstractRssRepository(
     suspend fun queryUnreadFullContentArticles() =
         articleDao.queryUnreadFullContentArticles(accountService.getCurrentAccountId())
 
+    open suspend fun deleteAllFeeds() {
+        val accountId = accountService.getCurrentAccountId()
+        articleDao.deleteByAccountId(accountId)
+        feedDao.deleteByAccountId(accountId)
+        groupDao.deleteByAccountId(accountId)
+        notificationHelper.cancelAllNotifications()
+    }
 }

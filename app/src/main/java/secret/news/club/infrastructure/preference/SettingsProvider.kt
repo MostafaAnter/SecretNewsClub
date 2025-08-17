@@ -27,7 +27,7 @@ class SettingsProvider @Inject constructor(
     @ApplicationScope coroutineScope: CoroutineScope,
     @IODispatcher ioDispatcher: CoroutineDispatcher
 ) {
-    private val _settingsFlow = MutableStateFlow(Settings())
+    private val _settingsFlow = MutableStateFlow(Settings.default(context))
     val settingsFlow: StateFlow<Settings> = _settingsFlow
     val settings: Settings get() = settingsFlow.value
 
@@ -53,7 +53,7 @@ class SettingsProvider @Inject constructor(
     init {
         coroutineScope.launch(ioDispatcher) {
             preferencesFlow.collect {
-                _settingsFlow.value = it.toSettings()
+                _settingsFlow.value = it.toSettings(context)
                 println("id: ${it.get<Int>(DataStoreKey.currentAccountId)}")
             }
         }
@@ -141,6 +141,7 @@ class SettingsProvider @Inject constructor(
 
             // Languages
             LocalLanguages provides settings.languages,
+            LocalCountry provides settings.country,
         ) {
             content()
         }

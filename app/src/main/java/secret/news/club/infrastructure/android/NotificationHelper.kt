@@ -33,6 +33,13 @@ class NotificationHelper @Inject constructor(
             )
         }
 
+    fun cancelAllNotifications() {
+        notificationManager.notificationChannelGroups.forEach { group ->
+            notificationManager.deleteNotificationChannelGroup(group.id)
+        }
+        notificationManager.cancelAll()
+    }
+
     fun notify(feedWithArticle: FeedWithArticle) {
         notificationManager.createNotificationChannelGroup(
             NotificationChannelGroup(

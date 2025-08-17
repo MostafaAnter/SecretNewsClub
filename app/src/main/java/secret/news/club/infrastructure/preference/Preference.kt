@@ -9,7 +9,7 @@ sealed class Preference {
     abstract fun put(context: Context, scope: CoroutineScope)
 }
 
-fun Preferences.toSettings(): Settings {
+fun Preferences.toSettings(context: Context): Settings {
     return Settings(
         // Version
         newVersionNumber = NewVersionNumberPreference.fromPreferences(this),
@@ -89,5 +89,6 @@ fun Preferences.toSettings(): Settings {
 
         // Languages
         languages = LanguagesPreference.fromPreferences(this),
+        country = CountryPreference.fromPreferences(this, context),
     )
 }

@@ -49,7 +49,6 @@ class MainActivity : AppCompatActivity() {
         MobileAds.initialize(this) {}
         Log.i("RLog", "onCreate: ${ProfileInstallerInitializer().create(this)}")
 
-        defaultSubscriptionManager.addDefaultSubscriptions()
         enableEdgeToEdge()
 
         // Set the language

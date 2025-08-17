@@ -170,9 +170,8 @@ data class DataStoreKey<T>(
         const val openLink = "openLink"
         const val openLinkAppSpecificBrowser = "openLinkAppSpecificBrowser"
         const val sharedContent = "sharedContent"
-
-        // Languages
         const val languages = "languages"
+        const val country = "country"
 
         val keys: MutableMap<String, DataStoreKey<*>> = mutableMapOf(
             // Version
@@ -249,7 +248,8 @@ data class DataStoreKey<T>(
             openLinkAppSpecificBrowser to DataStoreKey(stringPreferencesKey(openLinkAppSpecificBrowser), String::class.java),
             sharedContent to DataStoreKey(intPreferencesKey(sharedContent), Int::class.java),
             // Languages
-            languages to DataStoreKey(intPreferencesKey(languages), Int::class.java)
+            languages to DataStoreKey(intPreferencesKey(languages), Int::class.java),
+            country to DataStoreKey(stringPreferencesKey(country), String::class.java)
         )
     }
 }

@@ -41,7 +41,7 @@ constructor(
     settingsProvider: SettingsProvider,
 ) {
 
-    private val accountIdKey = intPreferencesKey(DataStoreKey.currentAccountId)
+    private val accountIdKey = intPreferencesKey(DataStoreKey.Companion.currentAccountId)
 
     val currentAccountIdFlow =
         settingsProvider.preferencesFlow
@@ -83,8 +83,8 @@ constructor(
                     )
                 }
             }
-            context.dataStore.put(DataStoreKey.currentAccountId, it.id!!)
-            context.dataStore.put(DataStoreKey.currentAccountType, it.type.id)
+            context.dataStore.put(DataStoreKey.Companion.currentAccountId, it.id!!)
+            context.dataStore.put(DataStoreKey.Companion.currentAccountType, it.type.id)
         }
     }
 
@@ -121,14 +121,14 @@ constructor(
             groupDao.deleteByAccountId(accountId)
             accountDao.delete(it)
             accountDao.queryAll().getOrNull(0)?.let {
-                context.dataStore.put(DataStoreKey.currentAccountId, it.id!!)
-                context.dataStore.put(DataStoreKey.currentAccountType, it.type.id)
+                context.dataStore.put(DataStoreKey.Companion.currentAccountId, it.id!!)
+                context.dataStore.put(DataStoreKey.Companion.currentAccountType, it.type.id)
             }
         }
     }
 
     suspend fun switch(account: Account) {
-        context.dataStore.put(DataStoreKey.currentAccountId, account.id!!)
-        context.dataStore.put(DataStoreKey.currentAccountType, account.type.id)
+        context.dataStore.put(DataStoreKey.Companion.currentAccountId, account.id!!)
+        context.dataStore.put(DataStoreKey.Companion.currentAccountType, account.type.id)
     }
 }
