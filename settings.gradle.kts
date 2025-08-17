@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SecretNewsClub"
 include(":app")
+include(":scripts")
