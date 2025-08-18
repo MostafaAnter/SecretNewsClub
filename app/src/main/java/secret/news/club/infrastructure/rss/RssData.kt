@@ -32,44 +32,30 @@ private fun getUKRssServices(): List<RssService> = listOf(
 private fun getCanadaRssServices(): List<RssService> = listOf(
     // News
     RssService("National Post", "https://nationalpost.com/feed", RssCategory.NEWS, "en", "CA"),
-    RssService("CBC News", "https://www.cbc.ca/cmlink/rss-topstories", RssCategory.NEWS, "en", "CA"),
-    RssService("The Globe and Mail", "https://www.theglobeandmail.com/rss/", RssCategory.NEWS, "en", "CA"),
-    RssService("Toronto Star", "https://www.thestar.com/content/thestar/feed.RSSManagerServlet.topstories.rss", RssCategory.NEWS, "en", "CA"),
-    RssService("CTV News", "https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009", RssCategory.NEWS, "en", "CA"),
-    RssService("Le Devoir", "https://www.ledevoir.com/rss/actualites.xml", RssCategory.NEWS, "fr", "CA"),
-    RssService("La Presse", "https://www.lapresse.ca/rss/actualites.xml", RssCategory.NEWS, "fr", "CA"),
     // Sports
-    RssService("TSN Sports", "https://www.tsn.ca/rss", RssCategory.SPORTS, "en", "CA"),
-    RssService("Sportsnet", "https://www.sportsnet.ca/feed/", RssCategory.SPORTS, "en", "CA"),
-    RssService("CBC Sports", "https://www.cbc.ca/cmlink/rss-sports", RssCategory.SPORTS, "en", "CA")
 )
 
 private fun getIndiaRssServices(): List<RssService> = listOf(
     RssService("The Times of India", "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms", RssCategory.NEWS, "en", "IN"),
     RssService("Hindustan Times", "https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml", RssCategory.NEWS, "en", "IN"),
     RssService("The Hindu", "https://www.thehindu.com/feeder/default.rss", RssCategory.NEWS, "en", "IN"),
+    RssService("NDTV", "http://feeds.feedburner.com/ndtvnews-top-stories", RssCategory.NEWS, "en", "IN"),
     RssService("ESPN Cricinfo", "https://www.espncricinfo.com/rss/content/story/feeds/0.xml", RssCategory.SPORTS, "en", "IN"),
+    RssService("Zee News Sports", "http://zeenews.india.com/rss/sports-news.xml", RssCategory.SPORTS, "en", "IN"),
 )
 
 private fun getAustraliaRssServices(): List<RssService> = listOf(
     RssService("ABC News Australia", "https://www.abc.net.au/news/feed/51120/rss.xml", RssCategory.NEWS, "en", "AU"),
     RssService("The Sydney Morning Herald", "https://www.smh.com.au/rss/feed.xml", RssCategory.NEWS, "en", "AU"),
     RssService("The Age", "https://www.theage.com.au/rss/feed.xml", RssCategory.NEWS, "en", "AU"),
-    RssService("ESPN Australia", "https://www.espn.com.au/espn/rss/news", RssCategory.SPORTS, "en", "AU")
+    RssService("ESPN Australia", "https://www.espn.com.au/espn/rss/news", RssCategory.SPORTS, "en", "AU"),
 )
 
 private fun getEgyptRssServices(): List<RssService> = listOf(
     // News
-    RssService("Daily News Egypt", "https://dailynewsegypt.com/feed/", RssCategory.NEWS, "en", "EG"),
     RssService("Youm7", "https://www.youm7.com/rss/SectionRss?SectionID=65", RssCategory.NEWS, "ar", "EG"),
-    RssService("Al-Ahram", "https://gate.ahram.org.eg/rss/0/0.aspx", RssCategory.NEWS, "ar", "EG"),
-    RssService("Al-Masry Al-Youm", "https://www.almasryalyoum.com/rss/rssfeeds", RssCategory.NEWS, "ar", "EG"),
-    RssService("Egypt Independent", "https://www.egyptindependent.com/feed/", RssCategory.NEWS, "en", "EG"),
     RssService("Sada Elbalad", "https://see.news/rss", RssCategory.NEWS, "ar", "EG"),
     // Sports
-    RssService("FilGoal", "https://www.filgoal.com/rss/news", RssCategory.SPORTS, "ar", "EG"),
-    RssService("YallaKora", "https://www.yallakora.com/rss", RssCategory.SPORTS, "ar", "EG"),
-    RssService("KingFut", "https://www.kingfut.com/feed/", RssCategory.SPORTS, "en", "EG")
 )
 
 private fun getFranceRssServices(): List<RssService> = listOf(
@@ -77,20 +63,17 @@ private fun getFranceRssServices(): List<RssService> = listOf(
     RssService("Le Monde", "https://www.lemonde.fr/rss/une.xml", RssCategory.NEWS, "fr", "FR"),
     RssService("Le Figaro", "https://www.lefigaro.fr/rss/figaro_actualites.xml", RssCategory.NEWS, "fr", "FR"),
     RssService("France 24", "https://www.france24.com/fr/rss", RssCategory.NEWS, "fr", "FR"),
-    RssService("Libération", "https://www.liberation.fr/rss/latest/", RssCategory.NEWS, "fr", "FR"),
-    RssService("Le Parisien", "https://www.leparisien.fr/feeds/rss.xml", RssCategory.NEWS, "fr", "FR"),
     RssService("20 Minutes", "https://www.20minutes.fr/feeds/rss-une.xml", RssCategory.NEWS, "fr", "FR"),
     RssService("L'Express", "https://www.lexpress.fr/rss/alaune.xml", RssCategory.NEWS, "fr", "FR"),
     // Sports
-    RssService("L'Équipe", "https://www.lequipe.fr/rss/actu_rss.xml", RssCategory.SPORTS, "fr", "FR"),
-    RssService("Eurosport France", "https://www.eurosport.fr/rss.xml", RssCategory.SPORTS, "fr", "FR"),
-    RssService("RMC Sport", "https://rmcsport.bfmtv.com/rss/info/flux-rmc-sport-home/", RssCategory.SPORTS, "fr", "FR")
 )
 
 private fun getGermanyRssServices(): List<RssService> = listOf(
     RssService("Der Spiegel", "https://www.spiegel.de/schlagzeilen/tops/index.rss", RssCategory.NEWS, "de", "DE"),
     RssService("Die Welt", "https://www.welt.de/feeds/topnews.rss", RssCategory.NEWS, "de", "DE"),
     RssService("Tagesschau", "https://www.tagesschau.de/xml/rss2", RssCategory.NEWS, "de", "DE"),
+    RssService("kicker.de", "http://rss.kicker.de/news/fussball", RssCategory.SPORTS, "de", "DE"),
+    RssService("Sportschau ARD", "http://www.sportschau.de/sendung/sportschausendungindex100.feed", RssCategory.SPORTS, "de", "DE")
 )
 
 private fun getItalyRssServices(): List<RssService> = listOf(
@@ -102,28 +85,28 @@ private fun getItalyRssServices(): List<RssService> = listOf(
 private fun getSpainRssServices(): List<RssService> = listOf(
     RssService("El País", "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada", RssCategory.NEWS, "es", "ES"),
     RssService("El Mundo", "https://e00-elmundo.uecdn.es/elmundo/rss/espana.xml", RssCategory.NEWS, "es", "ES"),
+    RssService("ABC", "http://www.abc.es/rss/feeds/abc_EspanaEspana.xml", RssCategory.NEWS, "es", "ES"),
+    RssService("La Vanguardia", "http://www.lavanguardia.com/rss/home.xml", RssCategory.NEWS, "es", "ES"),
 )
 
 private fun getBrazilRssServices(): List<RssService> = listOf(
     RssService("Folha de S.Paulo", "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml", RssCategory.NEWS, "pt", "BR"),
     RssService("Estadão", "https://feeds.folha.uol.com.br/poder/rss091.xml", RssCategory.NEWS, "pt", "BR"),
+    RssService("O Globo", "https://oglobo.globo.com/rss/oglobo", RssCategory.NEWS, "pt", "BR"),
+    RssService("G1", "https://g1.globo.com/rss/g1/", RssCategory.NEWS, "pt", "BR"),
+    RssService("globoesporte.com", "https://ge.globo.com/rss/ge", RssCategory.SPORTS, "pt", "BR")
 )
 
 private fun getJapanRssServices(): List<RssService> = listOf(
     RssService("NHK News", "https://www3.nhk.or.jp/rss/news/cat0.xml", RssCategory.NEWS, "ja", "JP"),
     RssService("The Japan Times", "https://www.japantimes.co.jp/feed/", RssCategory.NEWS, "en", "JP"),
     RssService("Mainichi Shimbun", "https://mainichi.jp/rss/etc/flash.rss", RssCategory.NEWS, "ja", "JP"),
+    RssService("Asahi Shimbun", "http://www.asahi.com/rss/asahi/newsheadlines.rdf", RssCategory.NEWS, "ja", "JP")
 )
 
 private fun getChinaRssServices(): List<RssService> = listOf(
     // News
-    RssService("Xinhua News", "http://www.xinhuanet.com/english/rss/worldrss.xml", RssCategory.NEWS, "zh", "CN"),
-    RssService("China Daily", "http://www.chinadaily.com.cn/rss/china_rss.xml", RssCategory.NEWS, "en", "CN"),
-    RssService("Global Times", "https://www.globaltimes.cn/rss/China.xml", RssCategory.NEWS, "en", "CN"),
-    RssService("People's Daily Online", "http://en.people.cn/rss/english.xml", RssCategory.NEWS, "en", "CN"),
     // Sports
-    RssService("Xinhua Sports", "http://www.xinhuanet.com/english/rss/sportsrss.xml", RssCategory.SPORTS, "zh", "CN"),
-    RssService("China Daily Sports", "http://www.chinadaily.com.cn/rss/sports_rss.xml", RssCategory.SPORTS, "en", "CN")
 )
 
 private fun getRussiaRssServices(): List<RssService> = listOf(
@@ -140,37 +123,35 @@ private fun getSouthAfricaRssServices(): List<RssService> = listOf(
 
 private fun getSaudiArabiaRssServices(): List<RssService> = listOf(
     // News
-    RssService("Al Riyadh Newspaper", "https://www.alriyadh.com/rss", RssCategory.NEWS, "ar", "SA"),
-    RssService("Okaz", "https://www.okaz.com.sa/rss", RssCategory.NEWS, "ar", "SA"),
-    RssService("Al Eqtisadiah", "https://www.aleqt.com/rss", RssCategory.NEWS, "ar", "SA"),
-    RssService("Saudi Gazette", "https://saudigazette.com.sa/rss", RssCategory.NEWS, "en", "SA"),
-    RssService("Arab News", "https://www.arabnews.com/rss", RssCategory.NEWS, "en", "SA"),
     // Sports
+    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/0", RssCategory.SPORTS, "ar", "SA"),
+    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/212", RssCategory.SPORTS, "ar", "SA"),
+    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/45", RssCategory.SPORTS, "ar", "SA"),
+    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/74", RssCategory.SPORTS, "ar", "SA"),
     RssService("Arriyadiyah", "https://arriyadiyah.com/rss", RssCategory.SPORTS, "ar", "SA"),
-    RssService("Kooora", "https://www.kooora.com/?n=0&o=rss", RssCategory.SPORTS, "ar", "SA")
 )
 
 private fun getUaeRssServices(): List<RssService> = listOf(
     // News
-    RssService("The National", "https://www.thenationalnews.com/rss", RssCategory.NEWS, "en", "AE"),
-    RssService("Gulf News", "https://gulfnews.com/rss?generatorName=top-stories", RssCategory.NEWS, "en", "AE"),
-    RssService("Khaleej Times", "https://www.khaleejtimes.com/rss", RssCategory.NEWS, "en", "AE"),
-    RssService("Al Bayan", "https://www.albayan.ae/polopoly_fs/1.2018576.1508838572!/rss/rss.xml", RssCategory.NEWS, "ar", "AE"),
-    RssService("Emirates News Agency (WAM)", "https://wam.ae/en/rss.xml", RssCategory.NEWS, "en", "AE"),
+    RssService("Lovin Dubai", "https://lovin.co/dubai/en/news/feed/", RssCategory.NEWS, "en", "AE"),
+    RssService("Lovin Dubai", "https://whatson.ae/feed/", RssCategory.NEWS, "en", "AE"),
     // Sports
-    RssService("Sport360", "https://sport360.com/feed", RssCategory.SPORTS, "en", "AE"),
-    RssService("Al-Ittihad Sports", "https://www.alittihad.ae/rss/sports", RssCategory.SPORTS, "ar", "AE")
 )
 
 private fun getTurkeyRssServices(): List<RssService> = listOf(
     RssService("Hürriyet", "https://www.hurriyet.com.tr/rss/anasayfa", RssCategory.NEWS, "tr", "TR"),
     RssService("Sabah", "https://www.sabah.com.tr/rss/gundem.xml", RssCategory.NEWS, "tr", "TR"),
     RssService("Daily Sabah", "https://www.dailysabah.com/rssFeed/1", RssCategory.NEWS, "en", "TR"),
+    RssService("Haber Turk", "http://www.haberturk.com/haberturk.xml", RssCategory.NEWS, "tr", "TR"),
+    RssService("FotoMac", "http://www.fotomac.com.tr/rss/besiktas.xml", RssCategory.SPORTS, "tr", "TR")
 )
 
 private fun getArgentinaRssServices(): List<RssService> = listOf(
     RssService("Clarín", "https://www.clarin.com/rss/lo-ultimo/", RssCategory.NEWS, "es", "AR"),
-    RssService("Olé - Sports", "https://www.ole.com.ar/rss/ultimas-noticias/", RssCategory.SPORTS, "es", "AR"),
+    RssService("La Nacion", "https://www.lanacion.com.ar/arc/outboundfeeds/rss/?outputType=xml", RssCategory.NEWS, "es", "AR"),
+    RssService("Infobae", "https://www.infobae.com/arc/outboundfeeds/rss/", RssCategory.NEWS, "es", "AR"),
+    RssService("Pagina/12", "https://www.pagina12.com.ar/rss/portada", RssCategory.NEWS, "es", "AR"),
+    RssService("Olé - Sports", "https://www.ole.com.ar/rss/ultimas-noticias/", RssCategory.SPORTS, "es", "AR")
 )
 
 private fun getMexicoRssServices(): List<RssService> = listOf(
@@ -183,6 +164,8 @@ private fun getSwedenRssServices(): List<RssService> = listOf(
     RssService("Dagens Nyheter", "https://www.dn.se/rss/", RssCategory.NEWS, "sv", "SE"),
     RssService("Svenska Dagbladet", "https://www.svd.se/?service=rss", RssCategory.NEWS, "sv", "SE"),
     RssService("Aftonbladet", "https://rss.aftonbladet.se/rss2/small/pages/sections/senastenytt/", RssCategory.NEWS, "sv", "SE"),
+    RssService("Expressen", "http://www.expressen.se/rss/nyheter", RssCategory.NEWS, "sv", "SE"),
+    RssService("SVT Nyheter", "https://www.svt.se/nyheter/rss.xml", RssCategory.NEWS, "sv", "SE"),
     RssService("Fotbollskanalen", "https://www.fotbollskanalen.se/rss/", RssCategory.SPORTS, "sv", "SE"),
     RssService("Sportbladet", "https://rss.aftonbladet.se/rss2/small/pages/sections/sportbladet/", RssCategory.SPORTS, "sv", "SE")
 )
@@ -190,12 +173,17 @@ private fun getSwedenRssServices(): List<RssService> = listOf(
 private fun getNorwayRssServices(): List<RssService> = listOf(
     RssService("Aftenposten", "https://www.aftenposten.no/rss", RssCategory.NEWS, "no", "NO"),
     RssService("VG", "https://www.vg.no/rss/feed/", RssCategory.NEWS, "no", "NO"),
+    RssService("Dagbladet", "http://www.dagbladet.no/rss/nyheter/", RssCategory.NEWS, "no", "NO"),
+    RssService("NRK Nyheter", "https://www.nrk.no/nyheter/siste.rss", RssCategory.NEWS, "no", "NO"),
+    RssService("TV2 Nyheter", "http://www.tv2.no/rss/nyheter/", RssCategory.NEWS, "no", "NO"),
     RssService("VG Sporten", "https://www.vg.no/rss/feed/?categories=sport", RssCategory.SPORTS, "no", "NO"),
     RssService("NRK Sport", "https://www.nrk.no/toppsaker.rss", RssCategory.SPORTS, "no", "NO")
 )
 
 private fun getDenmarkRssServices(): List<RssService> = listOf(
     RssService("Politiken", "https://politiken.dk/rss/senestenyt.rss", RssCategory.NEWS, "da", "DK"),
+    RssService("Ekstra Bladet", "http://ekstrabladet.dk/rssfeed/all/", RssCategory.NEWS, "da", "DK"),
+    RssService("BT", "http://www.bt.dk/bt/seneste/rss", RssCategory.NEWS, "da", "DK"),
 )
 
 private fun getFinlandRssServices(): List<RssService> = listOf(
@@ -209,27 +197,42 @@ private fun getNetherlandsRssServices(): List<RssService> = listOf(
     RssService("NOS Nieuws", "https://feeds.nos.nl/nosnieuwsalgemeen", RssCategory.NEWS, "nl", "NL"),
     RssService("De Telegraaf", "https://www.telegraaf.nl/rss", RssCategory.NEWS, "nl", "NL"),
     RssService("NRC", "https://www.nrc.nl/rss/", RssCategory.NEWS, "nl", "NL"),
+    RssService("AD.nl", "http://www.ad.nl/rss.xml", RssCategory.NEWS, "nl", "NL"),
+    RssService("NU.nl", "http://www.nu.nl/rss/Algemeen", RssCategory.NEWS, "nl", "NL"),
     RssService("Voetbal International", "https://www.vi.nl/rss", RssCategory.SPORTS, "nl", "NL"),
     RssService("AD Sportwereld", "https://www.ad.nl/sport/rss.xml", RssCategory.SPORTS, "nl", "NL")
 )
 
 private fun getBelgiumRssServices(): List<RssService> = listOf(
     RssService("Het Laatste Nieuws", "https://www.hln.be/rss.xml", RssCategory.NEWS, "nl", "BE"),
+    RssService("De Standaard", "https://www.standaard.be/rss", RssCategory.NEWS, "nl", "BE"),
+    RssService("De Morgen", "https://demorgen.be/in-het-nieuws/rss.xml", RssCategory.NEWS, "nl", "BE"),
+    RssService("La Libre", "https://www.lalibre.be/rss", RssCategory.NEWS, "fr", "BE"),
 )
 
 private fun getAustriaRssServices(): List<RssService> = listOf(
     // News
     RssService("Der Standard", "https://www.derstandard.at/rss", RssCategory.NEWS, "de", "AT"),
+    RssService("Krone.at", "http://www.krone.at/Nachrichten/rss.html", RssCategory.NEWS, "de", "AT"),
+    RssService("Kurier", "http://kurier.at/xml/rss", RssCategory.NEWS, "de", "AT"),
+    RssService("ORF.at", "http://rss.orf.at/news.xml", RssCategory.NEWS, "de", "AT"),
     // Sports
+    RssService("LAOLA1.at", "https://www.laola1.at/templates/generated/1/xml/rss/newsRSS.xml", RssCategory.SPORTS, "de", "AT")
 )
 
 private fun getSwitzerlandRssServices(): List<RssService> = listOf(
     // News
+    RssService("Tages Anzeiger", "http://www.tagesanzeiger.ch/rss.html", RssCategory.NEWS, "de", "CH"),
+    RssService("Neue Zuercher Zeitung", "http://www.nzz.ch/startseite.rss", RssCategory.NEWS, "de", "CH"),
     // Sports
+    RssService("SRF Sport", "http://www.srf.ch/sport/bnf/rss/718", RssCategory.SPORTS, "de", "CH")
 )
 
 private fun getPolandRssServices(): List<RssService> = listOf(
     // News
+    RssService("Onet Wiadomosci", "http://wiadomosci.onet.pl/.feed", RssCategory.NEWS, "pl", "PL"),
+    RssService("WP.pl Wiadomosci", "http://wiadomosci.wp.pl/rss.xml", RssCategory.NEWS, "pl", "PL"),
+    RssService("Gazeta.pl", "http://rss.gazeta.pl/pub/rss/wiadomosci.xml", RssCategory.NEWS, "pl", "PL"),
     // Sports
 )
 
@@ -237,18 +240,28 @@ private fun getCzechRepublicRssServices(): List<RssService> = listOf(
     // News
     RssService("ČT24", "https://ct24.ceskatelevize.cz/rss", RssCategory.NEWS, "cs", "CZ"),
     RssService("Právo", "https://www.novinky.cz/rss/", RssCategory.NEWS, "cs", "CZ"),
+    RssService("iDNES.cz", "http://servis.idnes.cz/rss.aspx?c=zpravodaj", RssCategory.NEWS, "cs", "CZ"),
+    RssService("Aktualne.cz", "http://zpravy.aktualne.cz/rss/", RssCategory.NEWS, "cs", "CZ"),
+    RssService("Blesk.cz", "http://www.blesk.cz/rss/", RssCategory.NEWS, "cs", "CZ"),
     // Sports
-    RssService("iSport.cz", "https://isport.blesk.cz/rss", RssCategory.SPORTS, "cs", "CZ")
+    RssService("iSport.cz", "https://isport.blesk.cz/rss", RssCategory.SPORTS, "cs", "CZ"),
+    RssService("Sport.cz", "http://www.sport.cz/rss2/", RssCategory.SPORTS, "cs", "CZ")
 )
 
 private fun getHungaryRssServices(): List<RssService> = listOf(
     // News
     RssService("Index.hu", "https://index.hu/24ora/rss", RssCategory.NEWS, "hu", "HU"),
+    RssService("hvg.hu", "http://hvg.hu/rss", RssCategory.NEWS, "hu", "HU"),
+    RssService("Blikk", "http://www.blikk.hu/rss/blikk", RssCategory.NEWS, "hu", "HU"),
     // Sports
 )
 
 private fun getGreeceRssServices(): List<RssService> = listOf(
     // News
+    RssService("in.gr", "http://rss.in.gr/Netvolution.Site.Engine.PageHandler.axd?rid=2&pid=250&la=1&si=1", RssCategory.NEWS, "el", "GR"),
+    RssService("Newsbomb.gr", "http://feeds.feedburner.com/newsbombgr", RssCategory.NEWS, "el", "GR"),
+    RssService("NewsIt.gr", "http://www.newsit.gr/rss/artrss.php", RssCategory.NEWS, "el", "GR"),
+    RssService("Proto Thema", "http://www.protothema.gr/rss/news/general/", RssCategory.NEWS, "el", "GR"),
     // Sports
 )
 
