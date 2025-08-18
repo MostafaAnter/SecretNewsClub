@@ -205,7 +205,7 @@ fun TipsAndSupportPage(
                         ) {
                             Image(
                                 modifier = Modifier.size(90.dp),
-                                painter = painterResource(R.mipmap.ic_launcher_round),
+                                painter = painterResource(R.drawable.ic_launcher_round),
                                 contentDescription = stringResource(R.string.read_you),
                             )
                         }
