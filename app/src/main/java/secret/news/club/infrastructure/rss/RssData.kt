@@ -123,12 +123,31 @@ private fun getAustraliaRssServices(): List<RssService> = listOf(
 )
 
 private fun getEgyptRssServices(): List<RssService> = listOf(
-    // News
     RssService("Youm7", "https://www.youm7.com/rss/SectionRss?SectionID=65", RssCategory.NEWS, "ar", "EG"),
     RssService("Sada Elbalad", "https://see.news/rss", RssCategory.NEWS, "ar", "EG"),
     RssService("alwafd.news", "https://alwafd.news/rss.aspx", RssCategory.NEWS, "ar", "EG"),
-    // YouTube
     RssService("Al Jazeera Mubasher", "https://www.youtube.com/feeds/videos.xml?channel_id=UCfiwzLy-8yKzIbsmZTzxDgw", RssCategory.NEWS, "ar", "EG"),
+    RssService("RSS Feed", "https://youm7.com/rss/rss", RssCategory.NEWS, "ar", "EG"),
+    RssService("masrawycom", "https://masrawy.com/rss", RssCategory.NEWS, "ar", "EG"),
+    RssService("RSS Feed", "https://www.masrawy.com/rss", RssCategory.NEWS, "ar", "EG"),
+    RssService("RSS Feed", "https://podcasts.google.com/feed/aHR0cHM6Ly9hbmNob3IuZm0vcy84YmY5Y2M1OC9wb2RjYXN0L3Jzcw?sa=X&ved=2ahUKEwjPsIWF1Nn2AhUH7xoKHS03BG4Q9sEGegQIARAC", RssCategory.NEWS, "ar", "EG"),
+    RssService("filgoalcom", "https://filgoal.com/feeds/news", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/rss", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/feed", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/rss.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/feed.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/feeds/all.atom.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/atom.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/rss/news", RssCategory.NEWS, "ar", "EG"),
+    RssService("yallakoracom", "https://yallakora.com/feeds/news", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/rss", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/feed", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/rss.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/feed.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/feeds/all.atom.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/atom.xml", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/rss/news", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknewscom", "https://shorouknews.com/feeds/news", RssCategory.NEWS, "ar", "EG"),
 )
 
 private fun getFranceRssServices(): List<RssService> = listOf(

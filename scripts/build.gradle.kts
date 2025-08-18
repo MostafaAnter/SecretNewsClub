@@ -26,7 +26,7 @@ fun createPythonTask(taskName: String, description: String, vararg args: String)
                 fi
                 source venv/bin/activate
                 pip3 install -r requirements.txt
-                python3 rss_validator.py ${args.joinToString(" ")}
+                python3 validate_rss.py ${args.joinToString(" ")}
             """.trimIndent()
         )
 
@@ -50,7 +50,7 @@ tasks.register<Exec>("validateRssFeeds") {
         fi
         source venv/bin/activate
         pip3 install -r requirements.txt
-        python3 rss_validator.py --workers $workers --timeout $timeout --days $days
+        python3 validate_rss.py --workers $workers --timeout $timeout --days $days
     """.trimIndent())
 
     workingDir = project.projectDir
@@ -77,7 +77,7 @@ tasks.register<Exec>("discoverRssFeeds") {
             fi
             source venv/bin/activate
             pip3 install -r requirements.txt
-            python3 rss_validator.py --discover $countriesList --categories $categoriesList
+            python3 validate_rss.py --discover $countriesList --categories $categoriesList
         """.trimIndent())
     }
 
@@ -95,7 +95,7 @@ tasks.register<Exec>("discoverAllRssFeeds") {
         fi
         source venv/bin/activate
         pip3 install -r requirements.txt
-        python3 rss_validator.py --discover-all
+        python3 validate_rss.py --discover-all
     """.trimIndent())
 
     workingDir = project.projectDir
@@ -122,7 +122,7 @@ tasks.register<Exec>("discoverAndAddFeeds") {
             fi
             source venv/bin/activate
             pip3 install -r requirements.txt
-            python3 rss_validator.py --discover $countriesList --categories $categoriesList --add-to-file
+            python3 validate_rss.py --discover $countriesList --categories $categoriesList --add-to-file
         """.trimIndent())
     }
 
@@ -145,7 +145,7 @@ tasks.register<Exec>("cleanupRssFeeds") {
             fi
             source venv/bin/activate
             pip3 install -r requirements.txt
-            python3 rss_validator.py --remove $removeMode
+            python3 validate_rss.py --remove $removeMode
         """.trimIndent())
     }
 
@@ -174,7 +174,7 @@ tasks.register<Exec>("validateAndDiscover") {
             fi
             source venv/bin/activate
             pip3 install -r requirements.txt
-            python3 rss_validator.py --remove $removeMode --discover $countriesList --categories $categoriesList --add-to-file
+            python3 validate_rss.py --remove $removeMode --discover $countriesList --categories $categoriesList --add-to-file
         """.trimIndent())
     }
 
@@ -201,7 +201,7 @@ tasks.register<Exec>("generateKotlinFeeds") {
             fi
             source venv/bin/activate
             pip3 install -r requirements.txt
-            python3 rss_validator.py --discover $countriesList --categories $categoriesList --generate-kotlin
+            python3 validate_rss.py --discover $countriesList --categories $categoriesList --generate-kotlin
         """.trimIndent())
     }
 
@@ -219,7 +219,7 @@ tasks.register<Exec>("discoverMajorCountries") {
         fi
         source venv/bin/activate
         pip3 install -r requirements.txt
-        python3 rss_validator.py --discover US GB CA AU --categories news sports --add-to-file
+        python3 validate_rss.py --discover US GB CA AU --categories news sports --add-to-file
     """.trimIndent())
 
     workingDir = project.projectDir
@@ -236,7 +236,7 @@ tasks.register<Exec>("discoverEuropeanFeeds") {
         fi
         source venv/bin/activate
         pip3 install -r requirements.txt
-        python3 rss_validator.py --discover GB DE FR IT ES NL SE NO DK FI --categories news sports --add-to-file
+        python3 validate_rss.py --discover GB DE FR IT ES NL SE NO DK FI --categories news sports --add-to-file
     """.trimIndent())
 
     workingDir = project.projectDir
@@ -253,7 +253,7 @@ tasks.register<Exec>("discoverAsianFeeds") {
         fi
         source venv/bin/activate
         pip3 install -r requirements.txt
-        python3 rss_validator.py --discover IN JP CN --categories news sports --add-to-file
+        python3 validate_rss.py --discover IN JP CN --categories news sports --add-to-file
     """.trimIndent())
 
     workingDir = project.projectDir
@@ -272,10 +272,10 @@ tasks.register<Exec>("fullMaintenanceRss") {
         pip3 install -r requirements.txt
         
         echo "🔍 Step 1: Validating existing feeds..."
-        python3 rss_validator.py --remove moderate
+        python3 validate_rss.py --remove moderate
         
         echo "🌍 Step 2: Discovering new feeds for major countries..."
-        python3 rss_validator.py --discover US GB CA AU DE FR --categories news sports --add-to-file
+        python3 validate_rss.py --discover US GB CA AU DE FR --categories news sports --add-to-file
         
         echo "✅ RSS maintenance completed!"
     """.trimIndent())
@@ -298,7 +298,7 @@ tasks.register<Exec>("fastDiscovery") {
             fi
             source venv/bin/activate
             pip3 install -r requirements.txt
-            python3 rss_validator.py --discover $countriesList --categories news --workers 5 --timeout 8
+            python3 validate_rss.py --discover $countriesList --categories news --workers 5 --timeout 8
         """.trimIndent())
     }
 

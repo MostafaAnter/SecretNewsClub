@@ -490,6 +490,46 @@ class FeedDiscovery:
         }
         return languages.get(country_code, 'en')
 
+    def get_country_full_name(self, country_code: str) -> str:
+        """Get the full name of the country from the country code."""
+        country_names = {
+            'US': 'US',
+            'GB': 'UK',
+            'CA': 'Canada',
+            'AU': 'Australia',
+            'DE': 'Germany',
+            'FR': 'France',
+            'IN': 'India',
+            'BR': 'Brazil',
+            'JP': 'Japan',
+            'ES': 'Spain',
+            'IT': 'Italy',
+            'EG': 'Egypt',
+            'CN': 'China',
+            'RU': 'Russia',
+            'ZA': 'SouthAfrica',
+            'SA': 'SaudiArabia',
+            'AE': 'Uae',
+            'TR': 'Turkey',
+            'AR': 'Argentina',
+            'MX': 'Mexico',
+            'SE': 'Sweden',
+            'NO': 'Norway',
+            'DK': 'Denmark',
+            'FI': 'Finland',
+            'NL': 'Netherlands',
+            'BE': 'Belgium',
+            'AT': 'Austria',
+            'CH': 'Switzerland',
+            'PL': 'Poland',
+            'CZ': 'CzechRepublic',
+            'HU': 'Hungary',
+            'GR': 'Greece',
+            'NG': 'Nigeria',
+            'KE': 'Kenya',
+        }
+        return country_names.get(country_code, country_code)
+
 class RSSValidator:
     def __init__(self, max_workers=10, timeout=15, days_threshold=7):
         self.max_workers = max_workers
@@ -898,10 +938,14 @@ class KotlinFileUpdater:
 
     def _add_feeds_to_country_function(self, content: str, country_code: str, feeds: List[DiscoveredFeed]) -> str:
         """Add feeds to the specific country function."""
+        discovery = FeedDiscovery()
+        country_full_name = discovery.get_country_full_name(country_code)
+
         # Find the country function
         function_patterns = [
             f'private fun get{country_code}RssServices\\(\\): List<RssService> = listOf\\(',
             f'private fun get{country_code.title()}RssServices\\(\\): List<RssService> = listOf\\(',
+            f'private fun get{country_full_name}RssServices\\(\\): List<RssService> = listOf\\(',
         ]
 
         # Special cases for country function names
@@ -981,217 +1025,6 @@ class KotlinFileUpdater:
         else:
             print(f"Warning: Could not find existing RssService entries for country {country_code}")
             return content
-
-    def remove_problematic_feeds(self, results: List[ValidationResult], criteria: str = 'strict', days_threshold: int = 3):
-        """Remove problematic feeds from the Kotlin file."""
-        feeds_to_remove = []
-
-        for result in results:
-            should_remove = False
-
-            if criteria == 'strict':
-                should_remove = (not result.is_accessible or
-                                 not result.is_valid_feed or
-                                 not result.has_recent_content)
-            elif criteria == 'moderate':
-                should_remove = (not result.is_accessible or
-                                 not result.is_valid_feed)
-            elif criteria == 'loose':
-                should_remove = not result.is_accessible
-            elif criteria == 'old':
-                if result.latest_entry_date:
-                    should_remove = result.latest_entry_date < datetime.now() - timedelta(days=days_threshold)
-
-            if should_remove:
-                feeds_to_remove.append(result.feed_info.url)
-
-        if not feeds_to_remove:
-            print(f"No feeds to remove based on '{criteria}' criteria.")
-            return
-
-        print(f"\nRemoving {len(feeds_to_remove)} feeds based on '{criteria}' criteria:")
-        for url in feeds_to_remove:
-            print(f"  - {url}")
-
-        # Create backup
-        backup_path = f"{self.file_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        with open(self.file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        with open(backup_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"\nBackup created: {backup_path}")
-
-        # Remove problematic feeds
-        lines = content.split('\n')
-        new_lines = []
-        removed_count = 0
-
-        for line in lines:
-            should_remove_line = False
-            for url in feeds_to_remove:
-                if f'"{url}"' in line:
-                    should_remove_line = True
-                    removed_count += 1
-                    break
-
-            if not should_remove_line:
-                new_lines.append(line)
-
-        # Write updated content
-        with open(self.file_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(new_lines))
-
-        print(f"Successfully removed {removed_count} feed entries from {self.file_path}")
-def main():
-    parser = argparse.ArgumentParser(description='RSS Feed Validator and Discovery Tool')
-    parser.add_argument('--file', '-f',
-                        help='Path to RssData.kt file',
-                        default='../app/src/main/java/secret/news/club/infrastructure/rss/RssData.kt')
-    parser.add_argument('--workers', '-w', type=int, default=10,
-                        help='Number of parallel workers (default: 10)')
-    parser.add_argument('--timeout', '-t', type=int, default=15,
-                        help='Request timeout in seconds (default: 15)')
-    parser.add_argument('--days', '-d', type=int, default=7,
-                        help='Days threshold for recent content (default: 7)')
-    parser.add_argument('--remove', choices=['strict', 'moderate', 'loose', 'old'],
-                        help='Remove problematic feeds (strict/moderate/loose/old)')
-    parser.add_argument('--sort-by-language', action='store_true',
-                        help='Sort feeds by native language')
-    parser.add_argument('--discover', '-D', nargs='+',
-                        help='Discover new feeds for countries (e.g., --discover US GB CA)')
-    parser.add_argument('--discover-all', action='store_true',
-                        help='Discover feeds for all supported countries')
-    parser.add_argument('--categories', nargs='+',
-                        default=['news', 'sports'],
-                        help='Categories to discover (default: news sports)')
-    parser.add_argument('--no-progress', action='store_true',
-                        help='Disable progress output during validation')
-    parser.add_argument('--output-dir', '-o', default='.',
-                        help='Output directory for reports (default: current directory)')
-    parser.add_argument('--generate-kotlin', action='store_true',
-                        help='Generate Kotlin code for discovered feeds')
-    parser.add_argument('--add-to-file', action='store_true',
-                        help='Automatically add discovered feeds to Kotlin file')
-
-    args = parser.parse_args()
-
-    # Construct file path
-    script_dir = os.path.dirname(__file__)
-    file_path = os.path.join(script_dir, args.file)
-
-    # Initialize validator and discovery
-    validator = RSSValidator(
-        max_workers=args.workers,
-        timeout=args.timeout,
-        days_threshold=args.days
-    )
-
-    discovery = FeedDiscovery(timeout=args.timeout)
-
-    # Handle feed discovery
-    if args.discover or args.discover_all:
-        countries_to_discover = []
-
-        if args.discover_all:
-            countries_to_discover = ['US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IN', 'BR', 'JP', 'ES', 'IT']
-        elif args.discover:
-            countries_to_discover = [c.upper() for c in args.discover]
-
-        all_discovered_feeds = []
-
-        for country in countries_to_discover:
-            print(f"\n🌍 Discovering feeds for {country}...")
-            discovered_feeds = discovery.discover_feeds_for_country(country, args.categories)
-            all_discovered_feeds.extend(discovered_feeds)
-
-            if discovered_feeds:
-                print(f"✅ Found {len(discovered_feeds)} feeds for {country}")
-            else:
-                print(f"❌ No feeds found for {country}")
-
-        # Generate discovery report
-        discovery_report = DiscoveryReportGenerator(all_discovered_feeds)
-        discovery_report.generate_console_report()
-
-        # Save discovery report
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        discovery_file = os.path.join(args.output_dir, f"discovered_feeds_{timestamp}.json")
-        discovery_report.save_discovery_report(discovery_file)
-        print(f"\n📁 Discovery report saved: {discovery_file}")
-
-        # Generate Kotlin code if requested
-        if args.generate_kotlin and all_discovered_feeds:
-            kotlin_dir = os.path.join(args.output_dir, "kotlin_feeds")
-            os.makedirs(kotlin_dir, exist_ok=True)
-
-            for country in countries_to_discover:
-                kotlin_code = discovery_report.generate_kotlin_code(country)
-                kotlin_file = os.path.join(kotlin_dir, f"{country}_discovered_feeds.kt")
-
-                with open(kotlin_file, 'w', encoding='utf-8') as f:
-                    f.write(kotlin_code)
-
-                print(f"📝 Kotlin code generated: {kotlin_file}")
-
-        # Add feeds to Kotlin file if requested
-        if args.add_to_file and all_discovered_feeds and os.path.exists(file_path):
-            updater = KotlinFileUpdater(file_path)
-            updater.add_discovered_feeds_to_file(all_discovered_feeds)
-
-        return
-
-    # Original validation functionality
-    if not os.path.exists(file_path):
-        print(f"Error: File not found at {file_path}")
-        return
-
-    # Extract and validate existing feeds
-    print(f"Extracting feeds from {file_path}...")
-    feeds = validator.get_feeds_from_file(file_path)
-
-    if not feeds:
-        print("No feeds found to validate.")
-        return
-
-    print(f"Found {len(feeds)} RSS feeds to validate.")
-    print(f"Using {args.workers} workers with {args.timeout}s timeout.")
-    print(f"Content recency threshold: {args.days} days.")
-    print()
-
-    # Validate feeds
-    results = validator.validate_feeds_parallel(feeds, show_progress=not args.no_progress)
-
-    # Generate reports
-    report_gen = ReportGenerator(results)
-    report_gen.generate_console_report()
-
-    # Save detailed reports
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv_file = os.path.join(args.output_dir, f"rss_validation_{timestamp}.csv")
-    json_file = os.path.join(args.output_dir, f"rss_validation_{timestamp}.json")
-
-    report_gen.save_csv_report(csv_file)
-    report_gen.save_json_report(json_file)
-
-    print(f"\nDetailed reports saved:")
-    print(f"  CSV: {csv_file}")
-    print(f"  JSON: {json_file}")
-
-    # Remove problematic feeds if requested
-    if args.remove:
-        updater = KotlinFileUpdater(file_path)
-        updater.remove_problematic_feeds(results, args.remove, args.days)
-
-    # Sort feeds by native language if requested
-    if args.sort_by_language:
-        print("\nSorting feeds by native language...")
-        updater = KotlinFileUpdater(file_path)
-        updater.sort_feeds_by_language(feeds, validator)
-
-class KotlinFileUpdater:
-    def __init__(self, file_path: str):
-        self.file_path = file_path
 
     def remove_problematic_feeds(self, results: List[ValidationResult], criteria: str = 'strict', days_threshold: int = 3):
         """Remove problematic feeds from the Kotlin file."""
@@ -1372,6 +1205,168 @@ class KotlinFileUpdater:
             'EG': 'ar'
         }
         return languages.get(country_code, 'en')
+
+def main():
+    parser = argparse.ArgumentParser(description='RSS Feed Validator and Discovery Tool')
+    parser.add_argument('--file', '-f',
+                        help='Path to RssData.kt file',
+                        default='../app/src/main/java/secret/news/club/infrastructure/rss/RssData.kt')
+    parser.add_argument('--workers', '-w', type=int, default=10,
+                        help='Number of parallel workers (default: 10)')
+    parser.add_argument('--timeout', '-t', type=int, default=15,
+                        help='Request timeout in seconds (default: 15)')
+    parser.add_argument('--days', '-d', type=int, default=7,
+                        help='Days threshold for recent content (default: 7)')
+    parser.add_argument('--remove', choices=['strict', 'moderate', 'loose', 'old'],
+                        help='Remove problematic feeds (strict/moderate/loose/old)')
+    parser.add_argument('--sort-by-language', action='store_true',
+                        help='Sort feeds by native language')
+    parser.add_argument('--discover', '-D', nargs='+',
+                        help='Discover new feeds for countries (e.g., --discover US GB CA)')
+    parser.add_argument('--discover-all', action='store_true',
+                        help='Discover feeds for all supported countries')
+    parser.add_argument('--categories', nargs='+',
+                        default=['news', 'sports'],
+                        help='Categories to discover (default: news sports)')
+    parser.add_argument('--no-progress', action='store_true',
+                        help='Disable progress output during validation')
+    parser.add_argument('--output-dir', '-o', default='.',
+                        help='Output directory for reports (default: current directory)')
+    parser.add_argument('--generate-kotlin', action='store_true',
+                        help='Generate Kotlin code for discovered feeds')
+    parser.add_argument('--add-to-file', action='store_true',
+                        help='Automatically add discovered feeds to Kotlin file')
+    parser.add_argument('--input-file', '-i',
+                        help='Path to a JSON file with discovered feeds to add')
+
+    args = parser.parse_args()
+
+    # Construct file path
+    script_dir = os.path.dirname(__file__)
+    file_path = os.path.join(script_dir, args.file)
+
+    # Initialize validator and discovery
+    validator = RSSValidator(
+        max_workers=args.workers,
+        timeout=args.timeout,
+        days_threshold=args.days
+    )
+
+    discovery = FeedDiscovery(timeout=args.timeout)
+
+    # Handle feed discovery
+    if args.discover or args.discover_all or args.input_file:
+        all_discovered_feeds = []
+
+        if args.input_file:
+            print(f"Reading discovered feeds from {args.input_file}...")
+            with open(args.input_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                for feed_data in data['feeds']:
+                    # Convert latest_entry_date back to datetime object
+                    if feed_data.get('latest_entry_date'):
+                        feed_data['latest_entry_date'] = datetime.fromisoformat(feed_data['latest_entry_date'])
+                    all_discovered_feeds.append(DiscoveredFeed(**feed_data))
+        else:
+            countries_to_discover = []
+
+            if args.discover_all:
+                countries_to_discover = ['US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IN', 'BR', 'JP', 'ES', 'IT']
+            elif args.discover:
+                countries_to_discover = [c.upper() for c in args.discover]
+
+            for country in countries_to_discover:
+                print(f"\n🌍 Discovering feeds for {country}...")
+                discovered_feeds = discovery.discover_feeds_for_country(country, args.categories)
+                all_discovered_feeds.extend(discovered_feeds)
+
+                if discovered_feeds:
+                    print(f"✅ Found {len(discovered_feeds)} feeds for {country}")
+                else:
+                    print(f"❌ No feeds found for {country}")
+
+            # Generate discovery report
+            discovery_report = DiscoveryReportGenerator(all_discovered_feeds)
+            discovery_report.generate_console_report()
+
+            # Save discovery report
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            discovery_file = os.path.join(args.output_dir, f"discovered_feeds_{timestamp}.json")
+            discovery_report.save_discovery_report(discovery_file)
+            print(f"\n📁 Discovery report saved: {discovery_file}")
+
+        # Generate Kotlin code if requested
+        if args.generate_kotlin and all_discovered_feeds:
+            kotlin_dir = os.path.join(args.output_dir, "kotlin_feeds")
+            os.makedirs(kotlin_dir, exist_ok=True)
+
+            countries_in_feeds = set(feed.country for feed in all_discovered_feeds)
+            for country in countries_in_feeds:
+                kotlin_code = DiscoveryReportGenerator(all_discovered_feeds).generate_kotlin_code(country)
+                kotlin_file = os.path.join(kotlin_dir, f"{country}_discovered_feeds.kt")
+
+                with open(kotlin_file, 'w', encoding='utf-8') as f:
+                    f.write(kotlin_code)
+
+                print(f"📝 Kotlin code generated: {kotlin_file}")
+
+        # Add feeds to Kotlin file if requested
+        if args.add_to_file and all_discovered_feeds and os.path.exists(file_path):
+            updater = KotlinFileUpdater(file_path)
+            updater.add_discovered_feeds_to_file(all_discovered_feeds)
+
+        return
+
+    # Original validation functionality
+    if not os.path.exists(file_path):
+        print(f"Error: File not found at {file_path}")
+        return
+
+    # Extract and validate existing feeds
+    print(f"Extracting feeds from {file_path}...")
+    feeds = validator.get_feeds_from_file(file_path)
+
+    if not feeds:
+        print("No feeds found to validate.")
+        return
+
+    print(f"Found {len(feeds)} RSS feeds to validate.")
+    print(f"Using {args.workers} workers with {args.timeout}s timeout.")
+    print(f"Content recency threshold: {args.days} days.")
+    print()
+
+    # Validate feeds
+    results = validator.validate_feeds_parallel(feeds, show_progress=not args.no_progress)
+
+    # Generate reports
+    report_gen = ReportGenerator(results)
+    report_gen.generate_console_report()
+
+    # Save detailed reports
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_file = os.path.join(args.output_dir, f"rss_validation_{timestamp}.csv")
+    json_file = os.path.join(args.output_dir, f"rss_validation_{timestamp}.json")
+
+    report_gen.save_csv_report(csv_file)
+    report_gen.save_json_report(json_file)
+
+    print(f"\nDetailed reports saved:")
+    print(f"  CSV: {csv_file}")
+    print(f"  JSON: {json_file}")
+
+    # Remove problematic feeds if requested
+    if args.remove:
+        updater = KotlinFileUpdater(file_path)
+        updater.remove_problematic_feeds(results, args.remove, args.days)
+
+    # Sort feeds by native language if requested
+    if args.sort_by_language:
+        print("\nSorting feeds by native language...")
+        updater = KotlinFileUpdater(file_path)
+        updater.sort_feeds_by_language(feeds, validator)
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
