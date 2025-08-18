@@ -13,9 +13,10 @@ from dataclasses import dataclass, asdict
 from typing import List, Dict, Optional, Tuple, Set
 import argparse
 from bs4 import BeautifulSoup
+from langdetect import detect
 
 # Installation instructions:
-# pip install feedparser requests beautifulsoup4 lxml
+# pip install feedparser requests beautifulsoup4 lxml langdetect
 
 @dataclass
 class FeedInfo:
@@ -605,6 +606,30 @@ class RSSValidator:
 
         return result
 
+    def get_feed_language(self, feed_info: FeedInfo) -> Optional[str]:
+        """Detects the language of the feed content."""
+        try:
+            response = self.session.get(feed_info.url, timeout=self.timeout)
+            if response.status_code != 200:
+                return None
+
+            feed = feedparser.parse(response.content)
+            if not feed.entries:
+                return None
+
+            # Concatenate titles and summaries of a few entries
+            content_sample = " ".join(
+                [entry.get('title', '') + ' ' + entry.get('summary', '') for entry in feed.entries[:5]]
+            )
+
+            if not content_sample.strip():
+                return None
+
+            return detect(content_sample)
+
+        except Exception:
+            return None
+
     def validate_feeds_parallel(self, feeds: List[FeedInfo], show_progress=True) -> List[ValidationResult]:
         """Validates multiple feeds in parallel."""
         results = []
@@ -957,7 +982,7 @@ class KotlinFileUpdater:
             print(f"Warning: Could not find existing RssService entries for country {country_code}")
             return content
 
-    def remove_problematic_feeds(self, results: List[ValidationResult], criteria: str = 'strict'):
+    def remove_problematic_feeds(self, results: List[ValidationResult], criteria: str = 'strict', days_threshold: int = 3):
         """Remove problematic feeds from the Kotlin file."""
         feeds_to_remove = []
 
@@ -973,6 +998,9 @@ class KotlinFileUpdater:
                                  not result.is_valid_feed)
             elif criteria == 'loose':
                 should_remove = not result.is_accessible
+            elif criteria == 'old':
+                if result.latest_entry_date:
+                    should_remove = result.latest_entry_date < datetime.now() - timedelta(days=days_threshold)
 
             if should_remove:
                 feeds_to_remove.append(result.feed_info.url)
@@ -1026,8 +1054,10 @@ def main():
                         help='Request timeout in seconds (default: 15)')
     parser.add_argument('--days', '-d', type=int, default=7,
                         help='Days threshold for recent content (default: 7)')
-    parser.add_argument('--remove', choices=['strict', 'moderate', 'loose'],
-                        help='Remove problematic feeds (strict/moderate/loose)')
+    parser.add_argument('--remove', choices=['strict', 'moderate', 'loose', 'old'],
+                        help='Remove problematic feeds (strict/moderate/loose/old)')
+    parser.add_argument('--sort-by-language', action='store_true',
+                        help='Sort feeds by native language')
     parser.add_argument('--discover', '-D', nargs='+',
                         help='Discover new feeds for countries (e.g., --discover US GB CA)')
     parser.add_argument('--discover-all', action='store_true',
@@ -1151,7 +1181,197 @@ def main():
     # Remove problematic feeds if requested
     if args.remove:
         updater = KotlinFileUpdater(file_path)
-        updater.remove_problematic_feeds(results, args.remove)
+        updater.remove_problematic_feeds(results, args.remove, args.days)
+
+    # Sort feeds by native language if requested
+    if args.sort_by_language:
+        print("\nSorting feeds by native language...")
+        updater = KotlinFileUpdater(file_path)
+        updater.sort_feeds_by_language(feeds, validator)
+
+class KotlinFileUpdater:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+
+    def remove_problematic_feeds(self, results: List[ValidationResult], criteria: str = 'strict', days_threshold: int = 3):
+        """Remove problematic feeds from the Kotlin file."""
+        feeds_to_remove = []
+
+        for result in results:
+            should_remove = False
+
+            if criteria == 'strict':
+                should_remove = (not result.is_accessible or
+                                 not result.is_valid_feed or
+                                 not result.has_recent_content)
+            elif criteria == 'moderate':
+                should_remove = (not result.is_accessible or
+                                 not result.is_valid_feed)
+            elif criteria == 'loose':
+                should_remove = not result.is_accessible
+            elif criteria == 'old':
+                if result.latest_entry_date:
+                    should_remove = result.latest_entry_date < datetime.now() - timedelta(days=days_threshold)
+
+            if should_remove:
+                feeds_to_remove.append(result.feed_info.url)
+
+        if not feeds_to_remove:
+            print(f"No feeds to remove based on '{criteria}' criteria.")
+            return
+
+        print(f"\nRemoving {len(feeds_to_remove)} feeds based on '{criteria}' criteria:")
+        for url in feeds_to_remove:
+            print(f"  - {url}")
+
+        # Create backup
+        backup_path = f"{self.file_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        with open(self.file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        with open(backup_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"\nBackup created: {backup_path}")
+
+        # Remove problematic feeds
+        lines = content.split('\n')
+        new_lines = []
+        removed_count = 0
+
+        for line in lines:
+            should_remove_line = False
+            for url in feeds_to_remove:
+                if f'"{url}"' in line:
+                    should_remove_line = True
+                    removed_count += 1
+                    break
+
+            if not should_remove_line:
+                new_lines.append(line)
+
+        # Write updated content
+        with open(self.file_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(new_lines))
+
+        print(f"Successfully removed {removed_count} feed entries from {self.file_path}")
+
+    def sort_feeds_by_language(self, feeds: List[FeedInfo], validator: RSSValidator):
+        """Sorts feeds in the Kotlin file by native language."""
+        print("Starting to sort feeds by language...")
+        try:
+            with open(self.file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            print("  - Read Kotlin file content.")
+
+            # Group feeds by country
+            feeds_by_country = {}
+            for feed in feeds:
+                country = feed.country
+                if country not in feeds_by_country:
+                    feeds_by_country[country] = []
+                feeds_by_country[country].append(feed)
+            print(f"  - Grouped feeds into {len(feeds_by_country)} countries.")
+
+            # Create backup
+            backup_path = f"{self.file_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            print(f"  - Backup created: {backup_path}")
+
+            # Update content for each country
+            updated_content = content
+            for country_code, country_feeds in feeds_by_country.items():
+                print(f"  - Processing country: {country_code}")
+                updated_content = self._sort_country_feeds(updated_content, country_code, country_feeds, validator)
+
+            # Write updated content
+            with open(self.file_path, 'w', encoding='utf-8') as f:
+                f.write(updated_content)
+
+            print(f"Successfully sorted feeds in {self.file_path}")
+
+        except Exception as e:
+            print(f"Error sorting feeds in Kotlin file: {e}")
+
+    def _sort_country_feeds(self, content: str, country_code: str, feeds: List[FeedInfo], validator: RSSValidator) -> str:
+        """Sorts feeds for a specific country function."""
+        print(f"    - Sorting feeds for {country_code}...")
+
+        native_language = self._get_language_for_country(country_code)
+        print(f"      - Native language for {country_code} is {native_language}.")
+        native_feeds = []
+        other_feeds = []
+
+        for feed in feeds:
+            content_language = validator.get_feed_language(feed)
+            if content_language and content_language.startswith(native_language):
+                print(f"        - Feed '{feed.name}' is in native language ({content_language}).")
+                native_feeds.append(feed)
+            else:
+                print(f"        - Feed '{feed.name}' is not in native language (language: {content_language}).")
+                other_feeds.append(feed)
+
+        sorted_feeds = native_feeds + other_feeds
+        print(f"      - Sorting complete. {len(native_feeds)} native feeds, {len(other_feeds)} other feeds.")
+
+        # Find the country function
+        function_patterns = [
+            f'private fun get{country_code}RssServices\\(\\): List<RssService> = listOf\\((.*?)\\)',
+            f'private fun get{country_code.title()}RssServices\\(\\): List<RssService> = listOf\\((.*?)\\)',
+        ]
+
+        # Special cases for country function names
+        function_name_map = {
+            'US': 'getUSRssServices',
+            'GB': 'getUKRssServices',
+            'UK': 'getUKRssServices'
+        }
+
+        if country_code in function_name_map:
+            function_patterns.append(f'private fun {function_name_map[country_code]}\\(\\): List<RssService> = listOf\\((.*?)\\)')
+
+        for pattern in function_patterns:
+            match = re.search(pattern, content, re.DOTALL)
+            if match:
+                function_content = match.group(1)
+                
+                # Create a mapping of URL to the original RssService string
+                url_to_service_string = {}
+                service_matches = re.findall(r'RssService\(.*?\)', function_content, re.DOTALL)
+                for service_string in service_matches:
+                    url_match = re.search(r'"(https?://[^"]+)"', service_string)
+                    if url_match:
+                        url_to_service_string[url_match.group(1)] = service_string
+
+                # Build the new sorted list of RssService strings
+                sorted_service_strings = []
+                for feed in sorted_feeds:
+                    if feed.url in url_to_service_string:
+                        sorted_service_strings.append(url_to_service_string[feed.url])
+
+                sorted_function_content = ",\n    ".join(sorted_service_strings)
+                if sorted_function_content:
+                    sorted_function_content = "\n    " + sorted_function_content + "\n"
+
+                new_function_string = match.group(0).replace(function_content, sorted_function_content)
+                return content.replace(match.group(0), new_function_string)
+
+        print(f"Warning: Could not find function for country {country_code}")
+        return content
+
+    def _get_language_for_country(self, country_code: str) -> str:
+        """Get primary language for country."""
+        languages = {
+            'US': 'en', 'GB': 'en', 'CA': 'en', 'AU': 'en',
+            'DE': 'de', 'AT': 'de', 'CH': 'de',
+            'FR': 'fr', 'BE': 'fr',
+            'ES': 'es', 'MX': 'es', 'AR': 'es',
+            'IT': 'it', 'BR': 'pt', 'IN': 'hi',
+            'JP': 'ja', 'NL': 'nl', 'SE': 'sv',
+            'NO': 'no', 'DK': 'da', 'FI': 'fi',
+            'EG': 'ar'
+        }
+        return languages.get(country_code, 'en')
 
 if __name__ == "__main__":
     main()
