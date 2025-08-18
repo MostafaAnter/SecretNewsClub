@@ -127,7 +127,6 @@ private fun getEgyptRssServices(): List<RssService> = listOf(
     RssService("Youm7", "https://www.youm7.com/rss/SectionRss?SectionID=65", RssCategory.NEWS, "ar", "EG"),
     RssService("Sada Elbalad", "https://see.news/rss", RssCategory.NEWS, "ar", "EG"),
     RssService("alwafd.news", "https://alwafd.news/rss.aspx", RssCategory.NEWS, "ar", "EG"),
-    // Sports
     // YouTube
     RssService("Al Jazeera Mubasher", "https://www.youtube.com/feeds/videos.xml?channel_id=UCfiwzLy-8yKzIbsmZTzxDgw", RssCategory.NEWS, "ar", "EG"),
 )
@@ -220,9 +219,53 @@ private fun getJapanRssServices(): List<RssService> = listOf(
 )
 
 private fun getChinaRssServices(): List<RssService> = listOf(
-    // News
-    // Sports
-    // YouTube
+    RssService("CCTV 中文", "https://www.youtube.com/feeds/videos.xml?channel_id=UCQ3kYaj3N4i2yG_Q9tO8R_w", RssCategory.NEWS, "zh", "CN"),
+    RssService("CGTN", "https://www.youtube.com/feeds/videos.xml?channel_id=UCTH5bE3V3sE82iK8qG2M3fQ", RssCategory.NEWS, "en", "CN"),
+    RssService("New China TV", "https://www.youtube.com/feeds/videos.xml?channel_id=UC4K_wCo3M6e3v_pW1q7a-SQ", RssCategory.NEWS, "en", "CN"),
+    RssService("人民网", "https://www.youtube.com/feeds/videos.xml?channel_id=UC1XG0yJm8T_yBup_w_4ac_A", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/rss", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/feed", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/feed.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/feeds/all.atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/rss/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("chinadailycomcn", "https://chinadaily.com.cn/feeds/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("RSS Feed", "https://sinanews.sina.cn/h5/feedback_guide.html", RssCategory.NEWS, "zh", "CN"),
+    RssService("坏行为不等于坏孩子", "https://weibo.com/1655524143/OfqbodQAQ?pagetype=profilefeed", RssCategory.NEWS, "zh", "CN"),
+    RssService("咋孩子应对复杂问题能力", "https://weibo.com/1655524143/Ofl4MnPs3?pagetype=profilefeed", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/rss", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/feed", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/feed.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/feeds/all.atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/rss/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("163com", "https://163.com/feeds/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/rss", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/feed", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/feed.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/feeds/all.atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/rss/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("qqcom", "https://qq.com/feeds/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/rss", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/feed", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/feed.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/feeds/all.atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/rss/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("ifengcom", "https://ifeng.com/feeds/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/rss", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/feed", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/feed.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/feeds/all.atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/atom.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/rss/news", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "https://caixin.com/feeds/news", RssCategory.NEWS, "zh", "CN")
 )
 
 private fun getRussiaRssServices(): List<RssService> = listOf(
@@ -243,14 +286,14 @@ private fun getSouthAfricaRssServices(): List<RssService> = listOf(
 
 private fun getSaudiArabiaRssServices(): List<RssService> = listOf(
     // News
+    RssService("sabq", "https://sabq.org/feed", RssCategory.NEWS, "ar", "SA"),
+    RssService("Mailchimptemplate", "https://aawsat.com/feed", RssCategory.NEWS, "ar", "SA"),
     RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/0", RssCategory.SPORTS, "ar", "SA"),
     RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/45", RssCategory.SPORTS, "ar", "SA"),
     RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/74", RssCategory.SPORTS, "ar", "SA"),
     RssService("Arriyadiyah", "https://arriyadiyah.com/rss", RssCategory.SPORTS, "ar", "SA"),
     RssService("Al Jazeera", "https://www.aljazeera.com/xml/rss/all.xml", RssCategory.NEWS, "en", "SA"),
     RssService("Al Arabiya", "https://www.youm7.com/rss/SectionRss?SectionID=88", RssCategory.NEWS, "en", "SA"),
-    // Sports
-    // YouTube
 )
 
 private fun getUaeRssServices(): List<RssService> = listOf(
@@ -430,7 +473,15 @@ private fun getKenyaRssServices(): List<RssService> = listOf(
     // YouTube
 )
 
-private fun getDefaultRssServices(): List<RssService> = emptyList()
+private fun getDefaultRssServices(): List<RssService> = listOf(
+    RssService("", "https://www.aljazeera.com/xml/rss/all.xml", RssCategory.NEWS, "en", ""),
+    RssService("", "https://www.cbsnews.com/latest/rss/world", RssCategory.NEWS, "en", ""),
+    RssService("", "https://www.cnbc.com/id/100727362/device/rss/rss.html", RssCategory.NEWS, "en", ""),
+    RssService("", "http://rss.cnn.com/rss/edition_world.rss", RssCategory.NEWS, "en", ""),
+    RssService("", "https://www.france24.com/en/rss", RssCategory.NEWS, "en", ""),
+    RssService("", "https://www.globalissues.org/news/feed", RssCategory.NEWS, "en", ""),
+
+)
 
 fun getRssServicesByCountry(countryCode: String, preferNativeLanguage: Boolean = true): List<RssService> {
     val services = when (countryCode.uppercase()) {
