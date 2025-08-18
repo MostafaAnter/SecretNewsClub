@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -51,6 +54,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -62,6 +66,7 @@ import androidx.work.WorkInfo
 import kotlinx.coroutines.launch
 import secret.news.club.R
 import secret.news.club.domain.data.FilterState
+import secret.news.club.infrastructure.preference.LocalCountry
 import secret.news.club.infrastructure.preference.LocalFeedsFilterBarPadding
 import secret.news.club.infrastructure.preference.LocalFeedsFilterBarStyle
 import secret.news.club.infrastructure.preference.LocalFeedsFilterBarTonalElevation
@@ -196,7 +201,33 @@ fun FeedsPage(
                     },
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }),
-                title = {},
+                title = {
+                    val country = LocalCountry.current
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = country?.value?.ifEmpty { stringResource(R.string.country_desc) }
+                                ?: stringResource(R.string.country_desc),
+                            modifier = Modifier
+                                .clickable {
+                                    navController.navigate(RouteName.COUNTRY_SELECTION) {
+                                        launchSingleTop = true
+                                    }
+                                }
+                                .background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    CircleShape
+                                )
+                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                },
                 navigationIcon = {
                     FeedbackIconButton(
                         modifier = Modifier.size(20.dp),
@@ -259,7 +290,6 @@ fun FeedsPage(
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(24.dp))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
