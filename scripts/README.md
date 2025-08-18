@@ -12,6 +12,7 @@ A comprehensive Python-based tool for validating existing RSS feeds and discover
 - [Configuration Options](#configuration-options)
 - [Best Practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
+- [Adding a New Country](#adding-a-new-country)
 
 ## 🔧 Overview
 
@@ -45,7 +46,60 @@ This system provides automated RSS feed management capabilities:
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
 
-## 📚 Available Commands
+## Direct Script Usage (Python)
+
+This section explains how to run the `validate_rss.py` script directly using Python. This is useful for debugging, development, or running outside the Gradle environment.
+
+### Running the script
+
+First, ensure you have activated the virtual environment:
+```bash
+source venv/bin/activate # On Windows: venv\Scripts\activate
+```
+
+### Available Arguments
+
+The script offers several command-line arguments for customization:
+
+| Argument | Short | Description | Default |
+|---|---|---|---|
+| `--help` | `-h` | Show help message and exit | N/A |
+| `--file` | `-f` | Path to the `RssData.kt` file to validate. | `../app/src/main/java/secret/news/club/infrastructure/rss/RssData.kt` |
+| `--workers` | `-w` | Number of parallel workers for validation. | `10` |
+| `--timeout` | `-t` | Request timeout in seconds. | `15` |
+| `--days` | `-d` | Days threshold for recent content. | `7` |
+| `--remove` | | Remove problematic feeds from the Kotlin file. Options: `strict`, `moderate`, `loose`. | `None` |
+| `--discover` | `-D` | Discover new feeds for a list of countries (e.g., `US GB`). | `None` |
+| `--discover-all` | | Discover feeds for all supported countries. | `False` |
+| `--categories` | | Categories to discover (e.g., `news sports`). | `news sports` |
+| `--no-progress`| | Disable the progress bar during validation. | `False` |
+| `--output-dir` | `-o` | Directory to save reports. | Current directory |
+| `--generate-kotlin` | | Generate Kotlin code snippets for discovered feeds. | `False` |
+| `--add-to-file` | | Automatically add discovered feeds to the Kotlin file. | `False` |
+
+### Usage Examples
+
+*   **Basic Validation:**
+    ```bash
+    python scripts/validate_rss.py
+    ```
+
+*   **Discover Feeds for Specific Countries:**
+    ```bash
+    python scripts/validate_rss.py --discover US GB --categories news
+    ```
+
+*   **Discover and Automatically Add Feeds:**
+    ```bash
+    python scripts/validate_rss.py --discover-all --add-to-file
+    ```
+
+*   **Remove Broken Feeds (Strict Mode):**
+    ```bash
+    python scripts/validate_rss.py --remove strict
+    ```
+
+## � Available Commands
 
 ### 🔍 Basic Operations
 
@@ -90,7 +144,7 @@ This system provides automated RSS feed management capabilities:
 | `generateKotlinFeeds` | Generate Kotlin code files | `./gradlew :scripts:generateKotlinFeeds -Pcountries=US,GB` |
 | `fastDiscovery` | Quick discovery for testing | `./gradlew :scripts:fastDiscovery -Pcountries=US,GB` |
 
-## 📖 Command Categories
+## �📖 Command Categories
 
 ### 1. Validation & Quality Control
 
@@ -211,3 +265,52 @@ Development & Testing
 # Generate code files without modifying main file
 ./gradlew :scripts:generateKotlinFeeds -Pcountries=US,GB,CA
 
+## Adding a New Country
+
+To add support for a new country, follow these steps:
+
+1.  **Add the country to `RssData.kt`**:
+    *   Open `app/src/main/java/secret/news/club/infrastructure/rss/RssData.kt`.
+    *   Add a new function for the country, following the existing format (e.g., `getNewCountryRssServices()`).
+    *   Add the new country to the `when` statement in the `getRssServicesByCountry` function.
+    *   Add the country and its language to the `getLanguageForCountry` function.
+
+2.  **Add the country to `validate_rss.py`**:
+    *   Open `scripts/validate_rss.py`.
+    *   Add the country's top news domains to the `country_domains` dictionary.
+    *   Add the country's top YouTube news channels to the `youtube_channels` dictionary.
+    *   Add the country's name in different languages to the `country_names` dictionary.
+
+3.  **Run the discovery script**:
+    ```bash
+    ./gradlew :scripts:discoverAndAddFeeds -Pcountries=XX
+    ```
+    (Replace `XX` with the new country's two-letter code)
+
+## Troubleshooting
+
+### Common Issues
+
+*   **"Could not find function for country XX"**: This error means that the script could not find a function for the specified country in the `RssData.kt` file. Make sure you have added a function for the country, as described in the "Adding a New Country" section.
+
+*   **"No new feeds discovered"**: This error means that the script could not find any new RSS feeds for the specified country. This could be because the script has already discovered all the available feeds, or because the script is unable to access the websites it needs to discover new feeds.
+
+*   **"Permission denied"**: This error means that the script does not have the necessary permissions to write to the `RssData.kt` file. Make sure that the file is not read-only and that you have the necessary permissions to modify it.
+
+### Getting Help
+
+If you are still having trouble, please open an issue on the project's GitHub page.
+
+## Discovery Methods
+
+The script uses the following methods to discover new RSS feeds:
+
+*   **Domain Scan**: The script scans a list of known domains for common RSS feed paths (e.g., `/rss`, `/feed`).
+
+*   **Search Engines**: The script uses search engines to find RSS feeds for the specified country and categories.
+
+*   **YouTube**: The script discovers YouTube RSS feeds for news channels.
+
+*   **HTML Link**: The script finds RSS feed links in the HTML of a webpage.
+
+*   **Anchor Link**: The script finds RSS feed links in the anchor tags of a webpage.

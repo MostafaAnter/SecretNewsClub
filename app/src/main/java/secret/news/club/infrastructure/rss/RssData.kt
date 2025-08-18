@@ -102,9 +102,14 @@ private fun getEgyptRssServices(): List<RssService> = listOf(
     RssService("Sada Elbalad", "https://see.news/rss", RssCategory.NEWS, "ar", "EG"),
     RssService("Al-Ahram", "http://www.ahram.org.eg/Rss/2.aspx", RssCategory.NEWS, "ar", "EG"),
     RssService("Al-Masry Al-Youm", "https://www.almasryalyoum.com/rss/news", RssCategory.NEWS, "ar", "EG"),
+    RssService("masrawy.com", "https://masrawy.com/rss", RssCategory.NEWS, "ar", "EG"),
+    RssService("shorouknews.com", "https://shorouknews.com/rss", RssCategory.NEWS, "ar", "EG"),
+    RssService("alwafd.news", "https://alwafd.news/rss.aspx", RssCategory.NEWS, "ar", "EG"),
     // Sports
     RssService("FilGoal", "https://www.filgoal.com/rss", RssCategory.SPORTS, "ar", "EG"),
     RssService("Yallakora", "https://www.yallakora.com/rss/news", RssCategory.SPORTS, "ar", "EG"),
+    RssService("filgoal.com", "https://filgoal.com/feeds/news", RssCategory.SPORTS, "ar", "EG"),
+    RssService("yallakora.com", "https://yallakora.com/rss", RssCategory.SPORTS, "ar", "EG"),
     // YouTube
     RssService("Al Jazeera Mubasher", "https://www.youtube.com/feeds/videos.xml?channel_id=UCfiwzLy-8yKzIbsmZTzxDgw", RssCategory.NEWS, "ar", "EG"),
     RssService("BBC News عربي", "https://www.youtube.com/feeds/videos.xml?channel_id=UCeTA_Al5_1SCSdqb_J0H2vA", RssCategory.NEWS, "ar", "EG"),

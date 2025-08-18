@@ -52,93 +52,99 @@ class DiscoveredFeed:
     entry_count: int
     latest_entry_date: Optional[datetime]
     discovery_method: str
-    class FeedDiscovery:
-        def __init__(self, timeout=15):
-            self.timeout = timeout
-            self.session = requests.Session()
-            self.session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'DNT': '1',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1'
-            })
 
-            # Country-specific news sites and domains
-            self.country_domains = {
-                'US': [
-                    'cnn.com', 'nytimes.com', 'washingtonpost.com', 'usatoday.com',
-                    'npr.org', 'pbs.org', 'abc.com', 'nbcnews.com', 'cbsnews.com',
-                    'foxnews.com', 'reuters.com', 'apnews.com', 'politico.com',
-                    'thehill.com', 'wsj.com', 'bloomberg.com', 'espn.com', 'si.com',
-                    'latimes.com', 'nypost.com', 'huffpost.com', 'time.com'
-                ],
-                'GB': [
-                    'bbc.co.uk', 'theguardian.com', 'independent.co.uk', 'telegraph.co.uk',
-                    'mirror.co.uk', 'dailymail.co.uk', 'thesun.co.uk', 'skynews.com',
-                    'itv.com', 'channel4.com', 'standard.co.uk', 'metro.co.uk',
-                    'express.co.uk', 'thetimes.co.uk', 'ft.com'
-                ],
-                'CA': [
-                    'cbc.ca', 'ctvnews.ca', 'globalnews.ca', 'nationalpost.com',
-                    'thestar.com', 'theglobeandmail.com', 'macleans.ca', 'citynews.ca',
-                    'cp24.com', 'vancouversun.com', 'calgaryherald.com'
-                ],
-                'AU': [
-                    'abc.net.au', 'smh.com.au', 'theage.com.au', 'news.com.au',
-                    'theaustralian.com.au', 'heraldsun.com.au', 'adelaidenow.com.au',
-                    'couriermail.com.au', 'nine.com.au', 'sbs.com.au', '7news.com.au'
-                ],
-                'DE': [
-                    'spiegel.de', 'bild.de', 'welt.de', 'zeit.de', 'faz.net',
-                    'sueddeutsche.de', 'tagesschau.de', 'focus.de', 'stern.de',
-                    'handelsblatt.com', 'kicker.de', 'sport1.de', 'n-tv.de'
-                ],
-                'FR': [
-                    'lemonde.fr', 'lefigaro.fr', 'liberation.fr', '20minutes.fr',
-                    'leparisien.fr', 'lexpress.fr', 'france24.com', 'francetvinfo.fr',
-                    'lequipe.fr', 'rmc.fr', 'europe1.fr', 'bfmtv.com'
-                ],
-                'IN': [
-                    'timesofindia.indiatimes.com', 'hindustantimes.com', 'thehindu.com',
-                    'indianexpress.com', 'ndtv.com', 'india.com', 'firstpost.com',
-                    'news18.com', 'zee5.com', 'cricbuzz.com', 'espncricinfo.com',
-                    'tribuneindia.com', 'deccanherald.com'
-                ],
-                'BR': [
-                    'globo.com', 'uol.com.br', 'folha.uol.com.br', 'estadao.com.br',
-                    'ig.com.br', 'terra.com.br', 'r7.com', 'band.uol.com.br',
-                    'ge.globo.com', 'lance.com.br', 'cartacapital.com.br'
-                ],
-                'JP': [
-                    'nikkei.com', 'asahi.com', 'yomiuri.co.jp', 'mainichi.jp',
-                    'sankei.com', 'nhk.or.jp', 'kyodo.co.jp', 'japantimes.co.jp',
-                    'jiji.com', 'tokyo-np.co.jp'
-                ],
-                'ES': [
-                    'elpais.com', 'elmundo.es', 'abc.es', 'lavanguardia.com',
-                    'elconfidencial.com', 'publico.es', 'marca.com', 'as.com',
-                    'mundodeportivo.com', 'rtve.es', '20minutos.es'
-                ],
-                'IT': [
-                    'repubblica.it', 'corriere.it', 'lastampa.it', 'ilsole24ore.com',
-                    'ansa.it', 'rai.it', 'gazzetta.it', 'corrieredellosport.it',
-                    'tuttosport.com', 'sky.it', 'quotidiano.net'
-                ]
-            }
+class FeedDiscovery:
+    def __init__(self, timeout=15):
+        self.timeout = timeout
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        })
 
-            # Common RSS feed paths
-            self.common_rss_paths = [
-                '/rss', '/feed', '/rss.xml', '/feed.xml', '/feeds/all.atom.xml',
-                '/atom.xml', '/rss/news', '/feeds/news', '/rss/latest',
-                '/feeds/latest', '/index.rss', '/news.rss', '/all.rss',
-                '/rss/top-stories', '/feeds/homepage', '/rss/world',
-                '/feeds/sport', '/rss/sports', '/feeds/technology',
-                '/rss/business', '/feeds/entertainment'
+        # Country-specific news sites and domains
+        self.country_domains = {
+            'US': [
+                'cnn.com', 'nytimes.com', 'washingtonpost.com', 'usatoday.com',
+                'npr.org', 'pbs.org', 'abc.com', 'nbcnews.com', 'cbsnews.com',
+                'foxnews.com', 'reuters.com', 'apnews.com', 'politico.com',
+                'thehill.com', 'wsj.com', 'bloomberg.com', 'espn.com', 'si.com',
+                'latimes.com', 'nypost.com', 'huffpost.com', 'time.com'
+            ],
+            'GB': [
+                'bbc.co.uk', 'theguardian.com', 'independent.co.uk', 'telegraph.co.uk',
+                'mirror.co.uk', 'dailymail.co.uk', 'thesun.co.uk', 'skynews.com',
+                'itv.com', 'channel4.com', 'standard.co.uk', 'metro.co.uk',
+                'express.co.uk', 'thetimes.co.uk', 'ft.com'
+            ],
+            'CA': [
+                'cbc.ca', 'ctvnews.ca', 'globalnews.ca', 'nationalpost.com',
+                'thestar.com', 'theglobeandmail.com', 'macleans.ca', 'citynews.ca',
+                'cp24.com', 'vancouversun.com', 'calgaryherald.com'
+            ],
+            'AU': [
+                'abc.net.au', 'smh.com.au', 'theage.com.au', 'news.com.au',
+                'theaustralian.com.au', 'heraldsun.com.au', 'adelaidenow.com.au',
+                'couriermail.com.au', 'nine.com.au', 'sbs.com.au', '7news.com.au'
+            ],
+            'DE': [
+                'spiegel.de', 'bild.de', 'welt.de', 'zeit.de', 'faz.net',
+                'sueddeutsche.de', 'tagesschau.de', 'focus.de', 'stern.de',
+                'handelsblatt.com', 'kicker.de', 'sport1.de', 'n-tv.de'
+            ],
+            'FR': [
+                'lemonde.fr', 'lefigaro.fr', 'liberation.fr', '20minutes.fr',
+                'leparisien.fr', 'lexpress.fr', 'france24.com', 'francetvinfo.fr',
+                'lequipe.fr', 'rmc.fr', 'europe1.fr', 'bfmtv.com'
+            ],
+            'IN': [
+                'timesofindia.indiatimes.com', 'hindustantimes.com', 'thehindu.com',
+                'indianexpress.com', 'ndtv.com', 'india.com', 'firstpost.com',
+                'news18.com', 'zee5.com', 'cricbuzz.com', 'espncricinfo.com',
+                'tribuneindia.com', 'deccanherald.com'
+            ],
+            'BR': [
+                'globo.com', 'uol.com.br', 'folha.uol.com.br', 'estadao.com.br',
+                'ig.com.br', 'terra.com.br', 'r7.com', 'band.uol.com.br',
+                'ge.globo.com', 'lance.com.br', 'cartacapital.com.br'
+            ],
+            'JP': [
+                'nikkei.com', 'asahi.com', 'yomiuri.co.jp', 'mainichi.jp',
+                'sankei.com', 'nhk.or.jp', 'kyodo.co.jp', 'japantimes.co.jp',
+                'jiji.com', 'tokyo-np.co.jp'
+            ],
+            'ES': [
+                'elpais.com', 'elmundo.es', 'abc.es', 'lavanguardia.com',
+                'elconfidencial.com', 'publico.es', 'marca.com', 'as.com',
+                'mundodeportivo.com', 'rtve.es', '20minutos.es'
+            ],
+            'IT': [
+                'repubblica.it', 'corriere.it', 'lastampa.it', 'ilsole24ore.com',
+                'ansa.it', 'rai.it', 'gazzetta.it', 'corrieredellosport.it',
+                'tuttosport.com', 'sky.it', 'quotidiano.net'
+            ],
+            'EG': [
+                'ahram.org.eg', 'youm7.com', 'masrawy.com', 'almasryalyoum.com',
+                'dostor.org', 'elwatannews.com', 'filgoal.com', 'yallakora.com',
+                'shorouknews.com', 'akhbarelyom.com', 'alwafd.news'
             ]
-            def discover_feeds_for_country(self, country_code: str, categories: List[str] = None) -> List[DiscoveredFeed]:
+        }
+
+        # Common RSS feed paths
+        self.common_rss_paths = [
+            '/rss', '/feed', '/rss.xml', '/feed.xml', '/feeds/all.atom.xml',
+            '/atom.xml', '/rss/news', '/feeds/news', '/rss/latest',
+            '/feeds/latest', '/index.rss', '/news.rss', '/all.rss',
+            '/rss/top-stories', '/feeds/homepage', '/rss/world',
+            '/feeds/sport', '/rss/sports', '/feeds/technology',
+            '/rss/business', '/feeds/entertainment'
+        ]
+    def discover_feeds_for_country(self, country_code: str, categories: List[str] = None) -> List[DiscoveredFeed]:
         """Discover RSS feeds for a specific country."""
         if categories is None:
             categories = ['news', 'sports']
@@ -270,6 +276,13 @@ class DiscoveredFeed:
                 ('UCZFMm1mMw0F81Z37aaEzTUA', 'NDTV'),
                 ('UCYPvAwZP8pZhSMW8qs7cVCw', 'India Today'),
                 ('UC_gUM8rL-Lrg6O3adPW9K1g', 'WION')
+            ],
+            'EG': [
+                ('UCb2pc3QkNBd6XhJ4h2x4_wQ', 'Al Jazeera Mubasher'),
+                ('UC-4KnwVftfg4A0I4-iL5W8g', 'BBC News عربي'),
+                ('UCTXf0-8X22eG6L2viGf7o_A', 'Sky News Arabia'),
+                ('UC24fB-2-w2b4v-Jt7_2-2_A', 'Al Arabiya'),
+                ('UC24fB-2-w2b4v-Jt7_2-2_A', 'AlHadath')
             ]
         }
 
@@ -288,54 +301,54 @@ class DiscoveredFeed:
 
         return discovered_feeds
     def _find_rss_links_on_page(self, url: str, country_code: str) -> List[DiscoveredFeed]:
-        """Find RSS feed links on a webpage."""
-        discovered_feeds = []
+            """Find RSS feed links on a webpage."""
+            discovered_feeds = []
 
-        try:
-            response = self.session.get(url, timeout=self.timeout)
-            if response.status_code != 200:
-                return discovered_feeds
+            try:
+                response = self.session.get(url, timeout=self.timeout)
+                if response.status_code != 200:
+                    return discovered_feeds
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+                soup = BeautifulSoup(response.content, 'html.parser')
 
-            # Look for RSS links in <link> tags
-            rss_links = soup.find_all('link', {
-                'type': ['application/rss+xml', 'application/atom+xml', 'application/rdf+xml']
-            })
+                # Look for RSS links in <link> tags
+                rss_links = soup.find_all('link', {
+                    'type': ['application/rss+xml', 'application/atom+xml', 'application/rdf+xml']
+                })
 
-            for link in rss_links:
-                rss_url = link.get('href')
-                if rss_url:
-                    # Convert relative URLs to absolute
-                    if rss_url.startswith('/'):
-                        rss_url = urljoin(url, rss_url)
-                    elif not rss_url.startswith('http'):
-                        continue
+                for link in rss_links:
+                    rss_url = link.get('href')
+                    if rss_url:
+                        # Convert relative URLs to absolute
+                        if rss_url.startswith('/'):
+                            rss_url = urljoin(url, rss_url)
+                        elif not rss_url.startswith('http'):
+                            continue
 
-                    title = link.get('title', 'RSS Feed')
-                    feed = self._check_rss_url(rss_url, title, country_code, 'news', 'html_link')
-                    if feed:
-                        discovered_feeds.append(feed)
+                        title = link.get('title', 'RSS Feed')
+                        feed = self._check_rss_url(rss_url, title, country_code, 'news', 'html_link')
+                        if feed:
+                            discovered_feeds.append(feed)
 
-            # Look for RSS links in anchor tags
-            rss_anchors = soup.find_all('a', href=re.compile(r'(rss|feed|atom)', re.I))
-            for anchor in rss_anchors[:3]:  # Limit to avoid too many requests
-                rss_url = anchor.get('href')
-                if rss_url:
-                    if rss_url.startswith('/'):
-                        rss_url = urljoin(url, rss_url)
-                    elif not rss_url.startswith('http'):
-                        continue
+                # Look for RSS links in anchor tags
+                rss_anchors = soup.find_all('a', href=re.compile(r'(rss|feed|atom)', re.I))
+                for anchor in rss_anchors[:3]:  # Limit to avoid too many requests
+                    rss_url = anchor.get('href')
+                    if rss_url:
+                        if rss_url.startswith('/'):
+                            rss_url = urljoin(url, rss_url)
+                        elif not rss_url.startswith('http'):
+                            continue
 
-                    title = anchor.get_text(strip=True) or 'RSS Feed'
-                    feed = self._check_rss_url(rss_url, title, country_code, 'news', 'anchor_link')
-                    if feed:
-                        discovered_feeds.append(feed)
+                        title = anchor.get_text(strip=True) or 'RSS Feed'
+                        feed = self._check_rss_url(rss_url, title, country_code, 'news', 'anchor_link')
+                        if feed:
+                            discovered_feeds.append(feed)
 
-        except Exception as e:
-            pass
+            except Exception as e:
+                pass
 
-        return discovered_feeds
+            return discovered_feeds
 
     def _check_rss_url(self, url: str, title: str, country_code: str, category: str, method: str) -> Optional[DiscoveredFeed]:
         """Check if a URL is a valid RSS feed."""
@@ -442,6 +455,7 @@ class DiscoveredFeed:
     def _get_country_names(self, country_code: str) -> List[str]:
         """Get country names for search queries."""
         country_names = {
+            'EG': ['Egypt', 'Egyptian', 'مصر'],
             'US': ['United States', 'America', 'USA'],
             'GB': ['United Kingdom', 'Britain', 'UK', 'England'],
             'CA': ['Canada', 'Canadian'],
@@ -470,23 +484,25 @@ class DiscoveredFeed:
             'ES': 'es', 'MX': 'es', 'AR': 'es',
             'IT': 'it', 'BR': 'pt', 'IN': 'en',
             'JP': 'ja', 'NL': 'nl', 'SE': 'sv',
-            'NO': 'no', 'DK': 'da', 'FI': 'fi'
+            'NO': 'no', 'DK': 'da', 'FI': 'fi',
+            'EG': 'ar'
         }
         return languages.get(country_code, 'en')
-    class RSSValidator:
-        def __init__(self, max_workers=10, timeout=15, days_threshold=7):
-            self.max_workers = max_workers
-            self.timeout = timeout
-            self.days_threshold = days_threshold
-            self.session = requests.Session()
-            self.session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate',
-                'Cache-Control': 'no-cache'
-            })
-            self.print_lock = Lock()
+
+class RSSValidator:
+    def __init__(self, max_workers=10, timeout=15, days_threshold=7):
+        self.max_workers = max_workers
+        self.timeout = timeout
+        self.days_threshold = days_threshold
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate',
+            'Cache-Control': 'no-cache'
+        })
+        self.print_lock = Lock()
 
     def get_feeds_from_file(self, file_path: str) -> List[FeedInfo]:
         """Extracts all RssService information from the given Kotlin file."""
@@ -613,10 +629,10 @@ class DiscoveredFeed:
                 results.append(future.result())
 
         return results
-    class ReportGenerator:
-        def __init__(self, results: List[ValidationResult]):
-            self.results = results
-            self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+class ReportGenerator:
+    def __init__(self, results: List[ValidationResult]):
+        self.results = results
+        self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def generate_console_report(self):
         """Generates a comprehensive console report."""
@@ -743,38 +759,38 @@ class DiscoveredFeed:
 
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, indent=2, ensure_ascii=False)
-            class DiscoveryReportGenerator:
+class DiscoveryReportGenerator:
     def __init__(self, discovered_feeds: List[DiscoveredFeed]):
         self.discovered_feeds = discovered_feeds
         self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def generate_console_report(self):
-        """Generate console report for discovered feeds."""
-        if not self.discovered_feeds:
-            print("\n❌ No new feeds discovered.")
-            return
+            """Generate console report for discovered feeds."""
+            if not self.discovered_feeds:
+                print("\n❌ No new feeds discovered.")
+                return
 
-        print(f"\n🎉 DISCOVERED {len(self.discovered_feeds)} NEW FEEDS")
-        print("=" * 60)
+            print(f"\n🎉 DISCOVERED {len(self.discovered_feeds)} NEW FEEDS")
+            print("=" * 60)
 
-        # Group by country
-        by_country = {}
-        for feed in self.discovered_feeds:
-            if feed.country not in by_country:
-                by_country[feed.country] = []
-            by_country[feed.country].append(feed)
+            # Group by country
+            by_country = {}
+            for feed in self.discovered_feeds:
+                if feed.country not in by_country:
+                    by_country[feed.country] = []
+                by_country[feed.country].append(feed)
 
-        for country, feeds in by_country.items():
-            print(f"\n{country} ({len(feeds)} feeds):")
-            for feed in feeds:
-                print(f"  📰 {feed.title}")
-                print(f"      URL: {feed.url}")
-                print(f"      Category: {feed.category}")
-                print(f"      Entries: {feed.entry_count}")
-                if feed.latest_entry_date:
-                    print(f"      Latest: {feed.latest_entry_date.strftime('%Y-%m-%d')}")
-                print(f"      Method: {feed.discovery_method}")
-                print()
+            for country, feeds in by_country.items():
+                print(f"\n{country} ({len(feeds)} feeds):")
+                for feed in feeds:
+                    print(f"  📰 {feed.title}")
+                    print(f"      URL: {feed.url}")
+                    print(f"      Category: {feed.category}")
+                    print(f"      Entries: {feed.entry_count}")
+                    if feed.latest_entry_date:
+                        print(f"      Latest: {feed.latest_entry_date.strftime('%Y-%m-%d')}")
+                    print(f"      Method: {feed.discovery_method}")
+                    print()
 
     def generate_kotlin_code(self, country_code: str) -> str:
         """Generate Kotlin code for discovered feeds."""
@@ -999,7 +1015,7 @@ class KotlinFileUpdater:
             f.write('\n'.join(new_lines))
 
         print(f"Successfully removed {removed_count} feed entries from {self.file_path}")
-        def main():
+def main():
     parser = argparse.ArgumentParser(description='RSS Feed Validator and Discovery Tool')
     parser.add_argument('--file', '-f',
                         help='Path to RssData.kt file',
