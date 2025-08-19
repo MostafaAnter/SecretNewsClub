@@ -366,4 +366,8 @@
     <string name="load_next_feed">Load next feed</string>
     <string name="mark_all_as_read_and_load_next_feed">Mark all as read and load next feed</string>
     <string name="pull_from_bottom">Pull from bottom</string>
+    <string name="updating_feeds">Updating feeds…</string>
+    <string name="no_feeds_for_country">No feeds available for the selected country.</string>
+    <string name="failed_to_load_feed">Failed to load feed: %1$s</string>
+    <string name="feeds_updated">Feeds updated.</string>
 </resources>

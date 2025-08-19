@@ -6,14 +6,17 @@ import android.database.CursorWindow
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.util.Consumer
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import androidx.profileinstaller.ProfileInstallerInitializer
 import coil.ImageLoader
@@ -21,6 +24,7 @@ import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 import java.lang.reflect.Field
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 import secret.news.club.domain.service.AccountService
 import secret.news.club.domain.service.DefaultSubscriptionManager
 import secret.news.club.infrastructure.compose.ProvideCompositionLocals
@@ -84,6 +88,16 @@ class MainActivity : AppCompatActivity() {
                 settingsProvider.ProvidesSettings {
                     val subscribeViewModel: SubscribeViewModel = hiltViewModel()
                     val navController = rememberNavController()
+
+                    LaunchedEffect(Unit) {
+                        lifecycleScope.launch {
+                            defaultSubscriptionManager.message.collect { message ->
+                                message?.let {
+                                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
 
                     ProvideCompositionLocals {
                         HomeEntry(
