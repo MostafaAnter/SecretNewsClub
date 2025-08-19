@@ -238,10 +238,10 @@ private fun getJapanRssServices(): List<RssService> = listOf(
 )
 
 private fun getChinaRssServices(): List<RssService> = listOf(
-    RssService("CCTV 中文", "https://www.youtube.com/feeds/videos.xml?channel_id=UCQ3kYaj3N4i2yG_Q9tO8R_w", RssCategory.NEWS, "zh", "CN"),
-    RssService("CGTN", "https://www.youtube.com/feeds/videos.xml?channel_id=UCTH5bE3V3sE82iK8qG2M3fQ", RssCategory.NEWS, "en", "CN"),
-    RssService("New China TV", "https://www.youtube.com/feeds/videos.xml?channel_id=UC4K_wCo3M6e3v_pW1q7a-SQ", RssCategory.NEWS, "en", "CN"),
-    RssService("人民网", "https://www.youtube.com/feeds/videos.xml?channel_id=UC1XG0yJm8T_yBup_w_4ac_A", RssCategory.NEWS, "zh", "CN"),
+    RssService("CCTV 中文", "http://www.chinadaily.com.cn/rss/hk_rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("CGTN", "http://www.chinadaily.com.cn/rss/china_rss.xml", RssCategory.NEWS, "en", "CN"),
+    RssService("New China TV", "http://www.chinadaily.com.cn/rss/bizchina_rss.xml", RssCategory.NEWS, "en", "CN"),
+    RssService("人民网", "http://www.chinadaily.com.cn/rss/world_rss.xml", RssCategory.NEWS, "zh", "CN"),
     RssService("chinadailycomcn", "https://chinadaily.com.cn/rss", RssCategory.NEWS, "zh", "CN"),
     RssService("chinadailycomcn", "https://chinadaily.com.cn/feed", RssCategory.NEWS, "zh", "CN"),
     RssService("chinadailycomcn", "https://chinadaily.com.cn/rss.xml", RssCategory.NEWS, "zh", "CN"),
@@ -250,9 +250,9 @@ private fun getChinaRssServices(): List<RssService> = listOf(
     RssService("chinadailycomcn", "https://chinadaily.com.cn/atom.xml", RssCategory.NEWS, "zh", "CN"),
     RssService("chinadailycomcn", "https://chinadaily.com.cn/rss/news", RssCategory.NEWS, "zh", "CN"),
     RssService("chinadailycomcn", "https://chinadaily.com.cn/feeds/news", RssCategory.NEWS, "zh", "CN"),
-    RssService("RSS Feed", "https://sinanews.sina.cn/h5/feedback_guide.html", RssCategory.NEWS, "zh", "CN"),
-    RssService("坏行为不等于坏孩子", "https://weibo.com/1655524143/OfqbodQAQ?pagetype=profilefeed", RssCategory.NEWS, "zh", "CN"),
-    RssService("咋孩子应对复杂问题能力", "https://weibo.com/1655524143/Ofl4MnPs3?pagetype=profilefeed", RssCategory.NEWS, "zh", "CN"),
+    RssService("RSS Feed", "http://www.chinadaily.com.cn/rss/opinion_rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("坏行为不等于坏孩子", "http://www.chinadaily.com.cn/rss/sports_rss.xml", RssCategory.NEWS, "zh", "CN"),
+    RssService("咋孩子应对复杂问题能力", "http://www.chinadaily.com.cn/rss/entertainment_rss.xml", RssCategory.NEWS, "zh", "CN"),
     RssService("163com", "https://163.com/rss", RssCategory.NEWS, "zh", "CN"),
     RssService("163com", "https://163.com/feed", RssCategory.NEWS, "zh", "CN"),
     RssService("163com", "https://163.com/rss.xml", RssCategory.NEWS, "zh", "CN"),
@@ -278,7 +278,7 @@ private fun getChinaRssServices(): List<RssService> = listOf(
     RssService("ifengcom", "https://ifeng.com/rss/news", RssCategory.NEWS, "zh", "CN"),
     RssService("ifengcom", "https://ifeng.com/feeds/news", RssCategory.NEWS, "zh", "CN"),
     RssService("caixincom", "https://caixin.com/rss", RssCategory.NEWS, "zh", "CN"),
-    RssService("caixincom", "https://caixin.com/feed", RssCategory.NEWS, "zh", "CN"),
+    RssService("caixincom", "http://www.chinadaily.com.cn/rss/cndy_rss.xml", RssCategory.NEWS, "zh", "CN"),
     RssService("caixincom", "https://caixin.com/rss.xml", RssCategory.NEWS, "zh", "CN"),
     RssService("caixincom", "https://caixin.com/feed.xml", RssCategory.NEWS, "zh", "CN"),
     RssService("caixincom", "https://caixin.com/feeds/all.atom.xml", RssCategory.NEWS, "zh", "CN"),
@@ -307,12 +307,12 @@ private fun getSaudiArabiaRssServices(): List<RssService> = listOf(
     // News
     RssService("sabq", "https://sabq.org/feed", RssCategory.NEWS, "ar", "SA"),
     RssService("Mailchimptemplate", "https://aawsat.com/feed", RssCategory.NEWS, "ar", "SA"),
-    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/0", RssCategory.SPORTS, "ar", "SA"),
-    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/45", RssCategory.SPORTS, "ar", "SA"),
-    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/74", RssCategory.SPORTS, "ar", "SA"),
     RssService("Arriyadiyah", "https://arriyadiyah.com/rss", RssCategory.SPORTS, "ar", "SA"),
     RssService("Al Jazeera", "https://www.aljazeera.com/xml/rss/all.xml", RssCategory.NEWS, "en", "SA"),
     RssService("Al Arabiya", "https://www.youm7.com/rss/SectionRss?SectionID=88", RssCategory.NEWS, "en", "SA"),
+    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/0", RssCategory.SPORTS, "ar", "SA"),
+    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/45", RssCategory.SPORTS, "ar", "SA"),
+    RssService("Arriyadiyah", "https://saudigazette.com.sa/rssFeed/74", RssCategory.SPORTS, "ar", "SA"),
 )
 
 private fun getUaeRssServices(): List<RssService> = listOf(
