@@ -133,6 +133,77 @@ class FeedDiscovery:
                 'ahram.org.eg', 'youm7.com', 'masrawy.com', 'almasryalyoum.com',
                 'dostor.org', 'elwatannews.com', 'filgoal.com', 'yallakora.com',
                 'shorouknews.com', 'akhbarelyom.com', 'alwafd.news'
+            ],
+            'MX': [
+                'milenio.com', 'excelsior.com.mx', 'eluniversal.com.mx', 'reforma.com',
+                'jornada.com.mx', 'expansion.mx', 'eleconomista.com.mx', 'forbes.com.mx',
+                'record.com.mx', 'mediotiempo.com', 'tudn.com', 'espn.com.mx'
+            ],
+            'RU': [
+                'ria.ru', 'tass.ru', 'interfax.ru', 'kommersant.ru', 'iz.ru',
+                'gazeta.ru', 'lenta.ru', 'rt.com', 'sputniknews.com', 'championat.com',
+                'sport-express.ru', 'sports.ru'
+            ],
+            'ZA': [
+                'news24.com', 'timeslive.co.za', 'iol.co.za', 'citizen.co.za',
+                'sowetanlive.co.za', 'dispatchlive.co.za', 'heraldlive.co.za',
+                'kickoff.com', 'supersport.com', 'sabcnews.com', 'ewn.co.za'
+            ],
+            'AE': [
+                'gulfnews.com', 'khaleejtimes.com', 'thenationalnews.com', 'gulf.today',
+                'emirates247.com', 'arabianbusiness.com', 'lovin.co', 'whatson.ae'
+            ],
+            'TR': [
+                'hurriyet.com.tr', 'sabah.com.tr', 'haberler.com', 'milliyet.com.tr',
+                'sozcu.com.tr', 'takvim.com.tr', 'haberturk.com', 'yenisafak.com',
+                'cumhuriyet.com.tr', 'fotomac.com.tr', 'fanatik.com.tr'
+            ],
+            'AR': [
+                'clarin.com', 'lanacion.com.ar', 'infobae.com', 'pagina12.com.ar',
+                'cronista.com', 'ambito.com', 'perfil.com', 'ole.com.ar',
+                'tycsports.com', 'tn.com.ar', 'diarioregistrado.com'
+            ],
+            'NG': [
+                'punchng.com', 'vanguardngr.com', 'guardian.ng', 'tribuneonlineng.com',
+                'dailytrust.com', 'leadership.ng', 'thenationonlineng.net',
+                'thisdaylive.com', 'saharareporters.com', 'premiumtimesng.com',
+                'completesports.com', 'brila.net', 'sportinglife.ng'
+            ],
+            'KE': [
+                'standardmedia.co.ke', 'nation.africa', 'the-star.co.ke', 'businessdailyafrica.com',
+                'citizen.digital', 'kenyanwallstreet.com', 'nairobinews.nation.africa'
+            ],
+            'DK': [
+                'dr.dk', 'politiken.dk', 'berlingske.dk', 'bt.dk', 'ekstrabladet.dk',
+                'jyllands-posten.dk', 'information.dk', 'kristeligt-dagblad.dk'
+            ],
+            'FI': [
+                'yle.fi', 'hs.fi', 'is.fi', 'iltalehti.fi', 'mtv.fi', 'taloussanomat.fi',
+                'kauppalehti.fi', 'uusisuomi.fi', 'verkkouutiset.fi'
+            ],
+            'BE': [
+                'hln.be', 'nieuwsblad.be', 'standaard.be', 'demorgen.be', 'lalibre.be',
+                'rtbf.be', 'vrt.be', 'dhnet.be', 'lesoir.be', 'sudinfo.be'
+            ],
+            'CH': [
+                'nzz.ch', 'blick.ch', 'tagesanzeiger.ch', 'srf.ch', '20min.ch',
+                'watson.ch', 'bluewin.ch', 'letemps.ch', 'tdg.ch'
+            ],
+            'PL': [
+                'onet.pl', 'wp.pl', 'gazeta.pl', 'interia.pl', 'tvn24.pl',
+                'rmf24.pl', 'polsatnews.pl', 'wprost.pl', 'newsweek.pl'
+            ],
+            'HU': [
+                'index.hu', 'origo.hu', '444.hu', 'hvg.hu', 'blikk.hu',
+                'nemzetisport.hu', 'nszol.hu', 'magyarnemzet.hu'
+            ],
+            'GR': [
+                'in.gr', 'newsbomb.gr', 'newsit.gr', 'protothema.gr', 'tovima.gr',
+                'kathimerini.gr', 'naftemporiki.gr', 'gazzetta.gr', 'sport24.gr'
+            ],
+            'CN': [
+                'chinadaily.com.cn', 'globaltimes.cn', 'shanghaiist.com', 'thebeijinger.com',
+                'supchina.com', 'sixthtone.com', 'whatsonweibo.com', 'chinafile.com'
             ]
         }
 
