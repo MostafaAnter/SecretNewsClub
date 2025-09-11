@@ -11,10 +11,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.util.Consumer
+import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -53,6 +60,7 @@ class MainActivity : AppCompatActivity() {
         MobileAds.initialize(this) {}
         Log.i("RLog", "onCreate: ${ProfileInstallerInitializer().create(this)}")
 
+        // Enable edge-to-edge display
         enableEdgeToEdge()
 
         // Set the language
@@ -103,6 +111,7 @@ class MainActivity : AppCompatActivity() {
                         HomeEntry(
                             subscribeViewModel = subscribeViewModel,
                             navController = navController,
+                            modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
                         )
                     }
 

@@ -58,6 +58,7 @@ fun HomeEntry(
     navController: NavHostController = rememberNavController(),
     homeViewModel: HomeViewModel = hiltViewModel(),
     subscribeViewModel: SubscribeViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
@@ -75,7 +76,7 @@ fun HomeEntry(
     ) {
         SharedTransitionScope {
             NavHost(
-                modifier = Modifier
+                modifier = modifier
                     .then(it)
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.surface),
