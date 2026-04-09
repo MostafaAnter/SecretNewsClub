@@ -3,6 +3,7 @@ package secret.news.club.ui.page.common
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.MaterialTheme
@@ -74,12 +75,17 @@ fun HomeEntry(
     AppTheme(
         useDarkTheme = LocalDarkTheme.current.isDarkTheme()
     ) {
+        // Full-screen background so the surface color shows through the transparent status bar
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+        ) {
         SharedTransitionScope {
             NavHost(
                 modifier = modifier
                     .then(it)
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface),
+                    .fillMaxSize(),
                 navController = navController,
                 startDestination = startDestination,
             ) {
@@ -221,5 +227,6 @@ fun HomeEntry(
                 }
             }
         }
+        } // Box
     }
 }
