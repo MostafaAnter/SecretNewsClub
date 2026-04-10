@@ -104,14 +104,14 @@ class ReadingViewModel @AssistedInject constructor(
     }
 
     suspend fun ReaderState.renderContent(articleWithFeed: ArticleWithFeed): ReaderState {
-        val contentState = if (articleWithFeed.feed.isFullContent) {
-            val fullContent =
-                readerCacheHelper.readFullContent(articleWithFeed.article.id).getOrNull()
-            if (fullContent != null) ReaderState.FullContent(fullContent) else {
-                renderFullContent()
-                ReaderState.Loading
-            }
-        } else ReaderState.Description(articleWithFeed.article.rawDescription)
+        val fullContent =
+            readerCacheHelper.readFullContent(articleWithFeed.article.id).getOrNull()
+        val contentState = if (fullContent != null) {
+            ReaderState.FullContent(fullContent)
+        } else {
+            renderFullContent()
+            ReaderState.Loading
+        }
 
         return copy(content = contentState)
     }

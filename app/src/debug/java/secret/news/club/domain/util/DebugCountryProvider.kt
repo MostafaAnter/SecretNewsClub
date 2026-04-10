@@ -8,8 +8,7 @@ package secret.news.club.domain.util
  *
  * If you want to use the real country detection logic, set this to `null`.
  */
-const val TEST_COUNTRY_CODE: String = "DE" // Example: Germany. Change to any 2-letter code.
-
+val TEST_COUNTRY_CODE: String? = null // Set to a 2-letter code (e.g. "DE") to override country detection.
 fun getDebugCountryCode(): String? {
     return TEST_COUNTRY_CODE
 }

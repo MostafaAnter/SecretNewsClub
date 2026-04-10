@@ -1,22 +1,272 @@
+#!/usr/bin/env python3
+"""
+RSS Feed Validator and Discovery Tool — async rewrite.
+
+Drop-in replacement: same CLI flags, same Gradle tasks, faster via asyncio+aiohttp.
+Discovery uses Google HTML scraping (Chrome UA, no API key) with DuckDuckGo as fallback.
+"""
+from __future__ import annotations
+
 import re
+import asyncio
+import aiohttp
 import feedparser
-import requests
-from datetime import datetime, timedelta
 import os
 import json
 import csv
-from urllib.parse import urlparse, urljoin, quote_plus
-import time
-import concurrent.futures
-from threading import Lock
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Optional, Tuple, Set
 import argparse
+import time
+from datetime import datetime, timedelta
+from dataclasses import dataclass, asdict
+from typing import Optional
+from urllib.parse import urljoin, quote_plus
 from bs4 import BeautifulSoup
-from langdetect import detect
 
-# Installation instructions:
-# pip install feedparser requests beautifulsoup4 lxml langdetect
+
+# ── Config ────────────────────────────────────────────────────────────────────
+
+DEFAULT_KOTLIN_FILE = os.path.join(
+    os.path.dirname(__file__),
+    '../app/src/main/java/secret/news/club/infrastructure/rss/RssData.kt',
+)
+
+COMMON_RSS_PATHS = [
+    '/rss', '/feed', '/rss.xml', '/feed.xml', '/atom.xml',
+    '/feeds/all.atom.xml', '/rss/news', '/feeds/news',
+    '/index.rss', '/news.rss', '/rss/top-stories',
+]
+
+FETCH_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (compatible; SecretNewsBot/2.0)',
+    'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
+
+# Chrome-like headers for Google search scraping (mimics a real browser)
+GOOGLE_HEADERS = {
+    'User-Agent': (
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/124.0.0.0 Safari/537.36'
+    ),
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+}
+
+# Created lazily so it binds to the running event loop at first use
+_SEARCH_SEM: 'asyncio.Semaphore | None' = None
+
+
+def _get_search_sem() -> asyncio.Semaphore:
+    global _SEARCH_SEM
+    if _SEARCH_SEM is None:
+        _SEARCH_SEM = asyncio.Semaphore(3)
+    return _SEARCH_SEM
+
+# Single source of truth for all country data.
+# 'fn' must match the exact function name in RssData.kt.
+COUNTRIES: dict = {
+    'US': {
+        'language': 'en', 'full_name': 'US', 'fn': 'getUSRssServices',
+        'domains': ['cnn.com', 'nytimes.com', 'npr.org', 'apnews.com', 'reuters.com',
+                    'espn.com', 'foxnews.com', 'nbcnews.com', 'bloomberg.com', 'wsj.com'],
+        'youtube': [('UCupvZG-5ko_eiXAupbDfxWw', 'CNN'), ('UCXIJgqnII2ZOINSWNOGFThA', 'Fox News'),
+                    ('UCeY0bbntWzzVIaj2z3QigXg', 'NBC News'), ('UCBi2mrWuNuyYy4gbM6fU18Q', 'ABC News')],
+    },
+    'GB': {
+        'language': 'en', 'full_name': 'UK', 'fn': 'getUKRssServices',
+        'domains': ['bbc.co.uk', 'theguardian.com', 'independent.co.uk',
+                    'telegraph.co.uk', 'skynews.com', 'ft.com', 'dailymail.co.uk'],
+        'youtube': [('UC16niRr50-MSBwiO3YDb3RA', 'BBC News'), ('UCoMdktPbSTixAyNGwb-UYkQ', 'Sky News'),
+                    ('UCIRYBXDze5krPDzAEOxFGVA', 'The Guardian')],
+    },
+    'CA': {
+        'language': 'en', 'full_name': 'Canada', 'fn': 'getCanadaRssServices',
+        'domains': ['cbc.ca', 'ctvnews.ca', 'globalnews.ca', 'nationalpost.com',
+                    'thestar.com', 'theglobeandmail.com', 'macleans.ca'],
+        'youtube': [('UCuFFtG20a-I1_p2L4tJ7p4w', 'CBC News'), ('UChLtXXpo4Ge1Rebe_4wBUAw', 'Global News')],
+    },
+    'AU': {
+        'language': 'en', 'full_name': 'Australia', 'fn': 'getAustraliaRssServices',
+        'domains': ['abc.net.au', 'smh.com.au', 'news.com.au', 'sbs.com.au', '7news.com.au'],
+        'youtube': [('UCVgA3pr9Qi4B502iG_2gLSA', 'ABC News Australia'),
+                    ('UC5T7D-Dh1eDGtsAFCuD84rA', '7NEWS Australia')],
+    },
+    'DE': {
+        'language': 'de', 'full_name': 'Germany', 'fn': 'getGermanyRssServices',
+        'domains': ['spiegel.de', 'bild.de', 'welt.de', 'zeit.de', 'faz.net',
+                    'sueddeutsche.de', 'tagesschau.de', 'focus.de', 'n-tv.de',
+                    'rss.dw.com', 'heise.de', 'ndr.de', 'zdf.de', 'mdr.de', 'tagesspiegel.de'],
+        'youtube': [('UC5NOEUbkLheQcaaRldYW5GA', 'tagesschau'), ('UC1JTaVpQhG1L1P4_K2Wde2g', 'DER SPIEGEL')],
+    },
+    'FR': {
+        'language': 'fr', 'full_name': 'France', 'fn': 'getFranceRssServices',
+        'domains': ['lemonde.fr', 'lefigaro.fr', 'liberation.fr', 'leparisien.fr',
+                    'france24.com', 'francetvinfo.fr', 'lequipe.fr', 'bfmtv.com'],
+        'youtube': [('UCCCPCZNChQdGa9EkATeye4g', 'FRANCE 24'), ('UCYpRD2-t73_9E0cq5M-OO4A', 'Le Monde')],
+    },
+    'IN': {
+        'language': 'en', 'full_name': 'India', 'fn': 'getIndiaRssServices',
+        'domains': ['timesofindia.indiatimes.com', 'hindustantimes.com', 'thehindu.com',
+                    'indianexpress.com', 'ndtv.com', 'firstpost.com', 'news18.com'],
+        'youtube': [('UCZFMm1mMw0F81Z37aaEzTUA', 'NDTV'), ('UCYPvAwZP8pZhSMW8qs7cVCw', 'India Today'),
+                    ('UC_gUM8rL-Lrg6O3adPW9K1g', 'WION')],
+    },
+    'BR': {
+        'language': 'pt', 'full_name': 'Brazil', 'fn': 'getBrazilRssServices',
+        'domains': ['globo.com', 'uol.com.br', 'folha.uol.com.br', 'estadao.com.br', 'r7.com',
+                    'metropoles.com', 'agenciabrasil.ebc.com.br', 'veja.abril.com.br', 'exame.com'],
+        'youtube': [],
+    },
+    'JP': {
+        'language': 'ja', 'full_name': 'Japan', 'fn': 'getJapanRssServices',
+        'domains': ['nikkei.com', 'asahi.com', 'yomiuri.co.jp', 'nhk.or.jp', 'japantimes.co.jp',
+                    'kyodonews.net', 'english.kyodonews.net', 'mainichi.jp', 'the-japan-news.com'],
+        'youtube': [],
+    },
+    'ES': {
+        'language': 'es', 'full_name': 'Spain', 'fn': 'getSpainRssServices',
+        'domains': ['elpais.com', 'elmundo.es', 'lavanguardia.com', 'marca.com', 'rtve.es'],
+        'youtube': [],
+    },
+    'IT': {
+        'language': 'it', 'full_name': 'Italy', 'fn': 'getItalyRssServices',
+        'domains': ['repubblica.it', 'corriere.it', 'ansa.it', 'rai.it', 'gazzetta.it'],
+        'youtube': [],
+    },
+    'EG': {
+        'language': 'ar', 'full_name': 'Egypt', 'fn': 'getEgyptRssServices',
+        'domains': ['ahram.org.eg', 'youm7.com', 'masrawy.com', 'filgoal.com', 'yallakora.com'],
+        'youtube': [('UCb2pc3QkNBd6XhJ4h2x4_wQ', 'Al Jazeera Mubasher'),
+                    ('UC-4KnwVftfg4A0I4-iL5W8g', 'BBC News عربي'),
+                    ('UCTXf0-8X22eG6L2viGf7o_A', 'Sky News Arabia')],
+    },
+    'MX': {
+        'language': 'es', 'full_name': 'Mexico', 'fn': 'getMexicoRssServices',
+        'domains': ['milenio.com', 'excelsior.com.mx', 'eluniversal.com.mx', 'mediotiempo.com',
+                    'jornada.com.mx', 'proceso.com.mx', 'animalpolitico.com', 'record.com.mx'],
+        'youtube': [],
+    },
+    'RU': {
+        'language': 'ru', 'full_name': 'Russia', 'fn': 'getRussiaRssServices',
+        'domains': ['ria.ru', 'tass.ru', 'kommersant.ru', 'iz.ru', 'lenta.ru'],
+        'youtube': [],
+    },
+    'ZA': {
+        'language': 'en', 'full_name': 'SouthAfrica', 'fn': 'getSouthAfricaRssServices',
+        'domains': ['news24.com', 'timeslive.co.za', 'ewn.co.za', 'sabcnews.com',
+                    'dailymaverick.co.za', 'groundup.org.za', 'businesslive.co.za', 'mg.co.za'],
+        'youtube': [],
+    },
+    'AE': {
+        'language': 'ar', 'full_name': 'Uae', 'fn': 'getUaeRssServices',
+        'domains': ['gulfnews.com', 'khaleejtimes.com', 'thenationalnews.com', 'arabianbusiness.com'],
+        'youtube': [],
+    },
+    'TR': {
+        'language': 'tr', 'full_name': 'Turkey', 'fn': 'getTurkeyRssServices',
+        'domains': ['hurriyet.com.tr', 'sabah.com.tr', 'haberturk.com', 'cumhuriyet.com.tr'],
+        'youtube': [],
+    },
+    'AR': {
+        'language': 'es', 'full_name': 'Argentina', 'fn': 'getArgentinaRssServices',
+        'domains': ['clarin.com', 'lanacion.com.ar', 'infobae.com', 'ole.com.ar',
+                    'eldestapeweb.com', 'pagina12.com.ar', 'tycsports.com', 'ambito.com'],
+        'youtube': [],
+    },
+    'NG': {
+        'language': 'en', 'full_name': 'Nigeria', 'fn': 'getNigeriaRssServices',
+        'domains': ['punchng.com', 'vanguardngr.com', 'guardian.ng', 'premiumtimesng.com'],
+        'youtube': [],
+    },
+    'KE': {
+        'language': 'en', 'full_name': 'Kenya', 'fn': 'getKenyaRssServices',
+        'domains': ['standardmedia.co.ke', 'nation.africa', 'citizen.digital',
+                    'the-star.co.ke', 'businessdailyafrica.com', 'capitalfm.co.ke',
+                    'kenyans.co.ke', 'tuko.co.ke'],
+        'youtube': [],
+    },
+    'DK': {
+        'language': 'da', 'full_name': 'Denmark', 'fn': 'getDenmarkRssServices',
+        'domains': ['dr.dk', 'politiken.dk', 'berlingske.dk', 'bt.dk',
+                    'tv2.dk', 'altinget.dk', 'borsen.dk', 'zetland.dk'],
+        'youtube': [],
+    },
+    'FI': {
+        'language': 'fi', 'full_name': 'Finland', 'fn': 'getFinlandRssServices',
+        'domains': ['yle.fi', 'hs.fi', 'is.fi', 'iltalehti.fi', 'kauppalehti.fi',
+                    'ts.fi', 'mtvuutiset.fi', 'verkkouutiset.fi'],
+        'youtube': [],
+    },
+    'BE': {
+        'language': 'nl', 'full_name': 'Belgium', 'fn': 'getBelgiumRssServices',
+        'domains': ['hln.be', 'nieuwsblad.be', 'standaard.be', 'rtbf.be', 'lesoir.be'],
+        'youtube': [],
+    },
+    'CH': {
+        'language': 'de', 'full_name': 'Switzerland', 'fn': 'getSwitzerlandRssServices',
+        'domains': ['nzz.ch', 'blick.ch', 'tagesanzeiger.ch', 'srf.ch'],
+        'youtube': [],
+    },
+    'PL': {
+        'language': 'pl', 'full_name': 'Poland', 'fn': 'getPolandRssServices',
+        'domains': ['onet.pl', 'wp.pl', 'gazeta.pl', 'tvn24.pl', 'polsatnews.pl'],
+        'youtube': [],
+    },
+    'HU': {
+        'language': 'hu', 'full_name': 'Hungary', 'fn': 'getHungaryRssServices',
+        'domains': ['index.hu', 'origo.hu', '444.hu', 'hvg.hu'],
+        'youtube': [],
+    },
+    'GR': {
+        'language': 'el', 'full_name': 'Greece', 'fn': 'getGreeceRssServices',
+        'domains': ['in.gr', 'protothema.gr', 'kathimerini.gr', 'sport24.gr'],
+        'youtube': [],
+    },
+    'CN': {
+        'language': 'zh', 'full_name': 'China', 'fn': 'getChinaRssServices',
+        'domains': ['chinadaily.com.cn', 'globaltimes.cn', 'supchina.com', 'sixthtone.com',
+                    'xinhuanet.com', 'cgtn.com', 'scmp.com'],
+        'youtube': [],
+    },
+    'NL': {
+        'language': 'nl', 'full_name': 'Netherlands', 'fn': 'getNetherlandsRssServices',
+        'domains': ['nu.nl', 'telegraaf.nl', 'nos.nl', 'volkskrant.nl'],
+        'youtube': [],
+    },
+    'SE': {
+        'language': 'sv', 'full_name': 'Sweden', 'fn': 'getSwedenRssServices',
+        'domains': ['svt.se', 'aftonbladet.se', 'dn.se', 'expressen.se'],
+        'youtube': [],
+    },
+    'NO': {
+        'language': 'no', 'full_name': 'Norway', 'fn': 'getNorwayRssServices',
+        'domains': ['nrk.no', 'vg.no', 'dagbladet.no', 'aftenposten.no'],
+        'youtube': [],
+    },
+    'SA': {
+        'language': 'ar', 'full_name': 'Saudi Arabia', 'fn': 'getSaudiArabiaRssServices',
+        'domains': ['arabnews.com', 'saudigazette.com.sa', 'alarabiya.net',
+                    'okaz.com.sa', 'aawsat.com', 'asharqnews.com'],
+        'youtube': [],
+    },
+    'AT': {
+        'language': 'de', 'full_name': 'Austria', 'fn': 'getAustriaRssServices',
+        'domains': ['orf.at', 'derstandard.at', 'krone.at', 'kurier.at',
+                    'diepresse.com', 'heute.at', 'kleinezeitung.at', 'oe24.at'],
+        'youtube': [],
+    },
+    'CZ': {
+        'language': 'cs', 'full_name': 'Czech Republic', 'fn': 'getCzechRepublicRssServices',
+        'domains': ['ct24.ceskatelevize.cz', 'idnes.cz', 'blesk.cz', 'aktualne.cz',
+                    'novinky.cz', 'lidovky.cz', 'e15.cz', 'irozhlas.cz'],
+        'youtube': [],
+    },
+}
+
+
+# ── Data classes ──────────────────────────────────────────────────────────────
 
 @dataclass
 class FeedInfo:
@@ -25,6 +275,7 @@ class FeedInfo:
     category: str
     language: str
     country: str
+
 
 @dataclass
 class ValidationResult:
@@ -37,1407 +288,673 @@ class ValidationResult:
     entry_count: int = 0
     latest_entry_date: Optional[datetime] = None
     error_message: Optional[str] = None
-    content_type: Optional[str] = None
     feed_title: Optional[str] = None
-    feed_description: Optional[str] = None
 
-@dataclass
-class DiscoveredFeed:
-    title: str
-    url: str
-    description: str
-    language: str
-    country: str
-    category: str
-    source_website: str
-    entry_count: int
-    latest_entry_date: Optional[datetime]
-    discovery_method: str
 
-class FeedDiscovery:
-    def __init__(self, timeout=15):
-        self.timeout = timeout
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        })
+# ── Internal helpers ──────────────────────────────────────────────────────────
 
-        # Country-specific news sites and domains
-        self.country_domains = {
-            'US': [
-                'cnn.com', 'nytimes.com', 'washingtonpost.com', 'usatoday.com',
-                'npr.org', 'pbs.org', 'abc.com', 'nbcnews.com', 'cbsnews.com',
-                'foxnews.com', 'reuters.com', 'apnews.com', 'politico.com',
-                'thehill.com', 'wsj.com', 'bloomberg.com', 'espn.com', 'si.com',
-                'latimes.com', 'nypost.com', 'huffpost.com', 'time.com'
-            ],
-            'GB': [
-                'bbc.co.uk', 'theguardian.com', 'independent.co.uk', 'telegraph.co.uk',
-                'mirror.co.uk', 'dailymail.co.uk', 'thesun.co.uk', 'skynews.com',
-                'itv.com', 'channel4.com', 'standard.co.uk', 'metro.co.uk',
-                'express.co.uk', 'thetimes.co.uk', 'ft.com'
-            ],
-            'CA': [
-                'cbc.ca', 'ctvnews.ca', 'globalnews.ca', 'nationalpost.com',
-                'thestar.com', 'theglobeandmail.com', 'macleans.ca', 'citynews.ca',
-                'cp24.com', 'vancouversun.com', 'calgaryherald.com'
-            ],
-            'AU': [
-                'abc.net.au', 'smh.com.au', 'theage.com.au', 'news.com.au',
-                'theaustralian.com.au', 'heraldsun.com.au', 'adelaidenow.com.au',
-                'couriermail.com.au', 'nine.com.au', 'sbs.com.au', '7news.com.au'
-            ],
-            'DE': [
-                'spiegel.de', 'bild.de', 'welt.de', 'zeit.de', 'faz.net',
-                'sueddeutsche.de', 'tagesschau.de', 'focus.de', 'stern.de',
-                'handelsblatt.com', 'kicker.de', 'sport1.de', 'n-tv.de'
-            ],
-            'FR': [
-                'lemonde.fr', 'lefigaro.fr', 'liberation.fr', '20minutes.fr',
-                'leparisien.fr', 'lexpress.fr', 'france24.com', 'francetvinfo.fr',
-                'lequipe.fr', 'rmc.fr', 'europe1.fr', 'bfmtv.com'
-            ],
-            'IN': [
-                'timesofindia.indiatimes.com', 'hindustantimes.com', 'thehindu.com',
-                'indianexpress.com', 'ndtv.com', 'india.com', 'firstpost.com',
-                'news18.com', 'zee5.com', 'cricbuzz.com', 'espncricinfo.com',
-                'tribuneindia.com', 'deccanherald.com'
-            ],
-            'BR': [
-                'globo.com', 'uol.com.br', 'folha.uol.com.br', 'estadao.com.br',
-                'ig.com.br', 'terra.com.br', 'r7.com', 'band.uol.com.br',
-                'ge.globo.com', 'lance.com.br', 'cartacapital.com.br'
-            ],
-            'JP': [
-                'nikkei.com', 'asahi.com', 'yomiuri.co.jp', 'mainichi.jp',
-                'sankei.com', 'nhk.or.jp', 'kyodo.co.jp', 'japantimes.co.jp',
-                'jiji.com', 'tokyo-np.co.jp'
-            ],
-            'ES': [
-                'elpais.com', 'elmundo.es', 'abc.es', 'lavanguardia.com',
-                'elconfidencial.com', 'publico.es', 'marca.com', 'as.com',
-                'mundodeportivo.com', 'rtve.es', '20minutos.es'
-            ],
-            'IT': [
-                'repubblica.it', 'corriere.it', 'lastampa.it', 'ilsole24ore.com',
-                'ansa.it', 'rai.it', 'gazzetta.it', 'corrieredellosport.it',
-                'tuttosport.com', 'sky.it', 'quotidiano.net'
-            ],
-            'EG': [
-                'ahram.org.eg', 'youm7.com', 'masrawy.com', 'almasryalyoum.com',
-                'dostor.org', 'elwatannews.com', 'filgoal.com', 'yallakora.com',
-                'shorouknews.com', 'akhbarelyom.com', 'alwafd.news'
-            ],
-            'MX': [
-                'milenio.com', 'excelsior.com.mx', 'eluniversal.com.mx', 'reforma.com',
-                'jornada.com.mx', 'expansion.mx', 'eleconomista.com.mx', 'forbes.com.mx',
-                'record.com.mx', 'mediotiempo.com', 'tudn.com', 'espn.com.mx'
-            ],
-            'RU': [
-                'ria.ru', 'tass.ru', 'interfax.ru', 'kommersant.ru', 'iz.ru',
-                'gazeta.ru', 'lenta.ru', 'rt.com', 'sputniknews.com', 'championat.com',
-                'sport-express.ru', 'sports.ru'
-            ],
-            'ZA': [
-                'news24.com', 'timeslive.co.za', 'iol.co.za', 'citizen.co.za',
-                'sowetanlive.co.za', 'dispatchlive.co.za', 'heraldlive.co.za',
-                'kickoff.com', 'supersport.com', 'sabcnews.com', 'ewn.co.za'
-            ],
-            'AE': [
-                'gulfnews.com', 'khaleejtimes.com', 'thenationalnews.com', 'gulf.today',
-                'emirates247.com', 'arabianbusiness.com', 'lovin.co', 'whatson.ae'
-            ],
-            'TR': [
-                'hurriyet.com.tr', 'sabah.com.tr', 'haberler.com', 'milliyet.com.tr',
-                'sozcu.com.tr', 'takvim.com.tr', 'haberturk.com', 'yenisafak.com',
-                'cumhuriyet.com.tr', 'fotomac.com.tr', 'fanatik.com.tr'
-            ],
-            'AR': [
-                'clarin.com', 'lanacion.com.ar', 'infobae.com', 'pagina12.com.ar',
-                'cronista.com', 'ambito.com', 'perfil.com', 'ole.com.ar',
-                'tycsports.com', 'tn.com.ar', 'diarioregistrado.com'
-            ],
-            'NG': [
-                'punchng.com', 'vanguardngr.com', 'guardian.ng', 'tribuneonlineng.com',
-                'dailytrust.com', 'leadership.ng', 'thenationonlineng.net',
-                'thisdaylive.com', 'saharareporters.com', 'premiumtimesng.com',
-                'completesports.com', 'brila.net', 'sportinglife.ng'
-            ],
-            'KE': [
-                'standardmedia.co.ke', 'nation.africa', 'the-star.co.ke', 'businessdailyafrica.com',
-                'citizen.digital', 'kenyanwallstreet.com', 'nairobinews.nation.africa'
-            ],
-            'DK': [
-                'dr.dk', 'politiken.dk', 'berlingske.dk', 'bt.dk', 'ekstrabladet.dk',
-                'jyllands-posten.dk', 'information.dk', 'kristeligt-dagblad.dk'
-            ],
-            'FI': [
-                'yle.fi', 'hs.fi', 'is.fi', 'iltalehti.fi', 'mtv.fi', 'taloussanomat.fi',
-                'kauppalehti.fi', 'uusisuomi.fi', 'verkkouutiset.fi'
-            ],
-            'BE': [
-                'hln.be', 'nieuwsblad.be', 'standaard.be', 'demorgen.be', 'lalibre.be',
-                'rtbf.be', 'vrt.be', 'dhnet.be', 'lesoir.be', 'sudinfo.be'
-            ],
-            'CH': [
-                'nzz.ch', 'blick.ch', 'tagesanzeiger.ch', 'srf.ch', '20min.ch',
-                'watson.ch', 'bluewin.ch', 'letemps.ch', 'tdg.ch'
-            ],
-            'PL': [
-                'onet.pl', 'wp.pl', 'gazeta.pl', 'interia.pl', 'tvn24.pl',
-                'rmf24.pl', 'polsatnews.pl', 'wprost.pl', 'newsweek.pl'
-            ],
-            'HU': [
-                'index.hu', 'origo.hu', '444.hu', 'hvg.hu', 'blikk.hu',
-                'nemzetisport.hu', 'nszol.hu', 'magyarnemzet.hu'
-            ],
-            'GR': [
-                'in.gr', 'newsbomb.gr', 'newsit.gr', 'protothema.gr', 'tovima.gr',
-                'kathimerini.gr', 'naftemporiki.gr', 'gazzetta.gr', 'sport24.gr'
-            ],
-            'CN': [
-                'chinadaily.com.cn', 'globaltimes.cn', 'shanghaiist.com', 'thebeijinger.com',
-                'supchina.com', 'sixthtone.com', 'whatsonweibo.com', 'chinafile.com'
-            ]
-        }
+def _parse_feed(content: bytes) -> tuple:
+    """
+    Returns (is_valid, title, entry_count, latest_date).
+    Runs feedparser synchronously — it's CPU-bound, not I/O-bound.
+    """
+    parsed = feedparser.parse(content)
+    has_entries = bool(parsed.entries)
+    has_meta = hasattr(parsed, 'feed') and bool(parsed.feed)
+    if not has_entries and not has_meta:
+        return False, None, 0, None
 
-        # Common RSS feed paths
-        self.common_rss_paths = [
-            '/rss', '/feed', '/rss.xml', '/feed.xml', '/feeds/all.atom.xml',
-            '/atom.xml', '/rss/news', '/feeds/news', '/rss/latest',
-            '/feeds/latest', '/index.rss', '/news.rss', '/all.rss',
-            '/rss/top-stories', '/feeds/homepage', '/rss/world',
-            '/feeds/sport', '/rss/sports', '/feeds/technology',
-            '/rss/business', '/feeds/entertainment'
-        ]
-    def discover_feeds_for_country(self, country_code: str, categories: List[str] = None) -> List[DiscoveredFeed]:
-        """Discover RSS feeds for a specific country."""
-        if categories is None:
-            categories = ['news', 'sports']
-
-        discovered_feeds = []
-
-        print(f"\n🔍 Discovering feeds for {country_code}...")
-
-        # Method 1: Check known domains for the country
-        if country_code in self.country_domains:
-            domain_feeds = self._discover_from_domains(
-                self.country_domains[country_code],
-                country_code,
-                categories
-            )
-            discovered_feeds.extend(domain_feeds)
-
-        # Method 2: Search for RSS feeds using search engines
-        search_feeds = self._discover_via_search(country_code, categories)
-        discovered_feeds.extend(search_feeds)
-
-        # Method 3: Discover YouTube RSS feeds
-        youtube_feeds = self._discover_youtube_feeds(country_code, categories)
-        discovered_feeds.extend(youtube_feeds)
-
-        # Remove duplicates and validate
-        unique_feeds = self._deduplicate_feeds(discovered_feeds)
-        validated_feeds = self._validate_discovered_feeds(unique_feeds)
-
-        return validated_feeds
-
-    def _discover_from_domains(self, domains: List[str], country_code: str, categories: List[str]) -> List[DiscoveredFeed]:
-        """Discover RSS feeds from known domains."""
-        discovered_feeds = []
-
-        print(f"  📡 Checking {len(domains)} known domains...")
-
-        for domain in domains[:15]:  # Limit to prevent too many requests
+    title = getattr(getattr(parsed, 'feed', None), 'title', None)
+    count = len(parsed.entries)
+    latest = None
+    if parsed.entries:
+        tup = parsed.entries[0].get('published_parsed') or parsed.entries[0].get('updated_parsed')
+        if tup:
             try:
-                # Try common RSS paths
-                for path in self.common_rss_paths[:8]:  # Limit paths per domain
-                    url = f"https://{domain}{path}"
-                    feed = self._check_rss_url(url, domain, country_code, 'news', 'domain_scan')
-                    if feed:
-                        discovered_feeds.append(feed)
-
-                # Try to find RSS links on the homepage
-                homepage_feeds = self._find_rss_links_on_page(f"https://{domain}", country_code)
-                discovered_feeds.extend(homepage_feeds[:3])  # Limit feeds per homepage
-
-                time.sleep(0.5)  # Rate limiting
-
-            except Exception as e:
-                continue
-
-        return discovered_feeds
-
-    def _discover_via_search(self, country_code: str, categories: List[str]) -> List[DiscoveredFeed]:
-        """Discover RSS feeds using search engines."""
-        discovered_feeds = []
-        country_names = self._get_country_names(country_code)
-
-        print(f"  🔎 Searching for feeds via search engines...")
-
-        for country_name in country_names[:2]:  # Limit country names
-            for category in categories[:2]:  # Limit categories
-                # Search queries
-                queries = [
-                    f'"{country_name}" {category} RSS feed site:*.{country_code.lower()}',
-                    f'{category} news {country_name} RSS xml',
-                ]
-
-                for query in queries:
-                    try:
-                        search_results = self._search_google(query)
-                        for result_url in search_results[:3]:  # Check top 3 results
-                            page_feeds = self._find_rss_links_on_page(result_url, country_code)
-                            discovered_feeds.extend(page_feeds[:2])  # Limit feeds per page
-
-                        time.sleep(2)  # Rate limiting for search
-
-                    except Exception as e:
-                        continue
-
-        return discovered_feeds
-
-    def _discover_youtube_feeds(self, country_code: str, categories: List[str]) -> List[DiscoveredFeed]:
-        """Discover YouTube RSS feeds for news channels."""
-        discovered_feeds = []
-
-        print(f"  📺 Searching for YouTube news channels...")
-
-        # Predefined YouTube channel mappings for better results
-        youtube_channels = {
-            'US': [
-                ('UCupvZG-5ko_eiXAupbDfxWw', 'CNN'),
-                ('UCXIJgqnII2ZOINSWNOGFThA', 'Fox News'),
-                ('UCaXkIU1QidjPwiAiafroGxw', 'MSNBC'),
-                ('UCeY0bbntWzzVIaj2z3QigXg', 'NBC News'),
-                ('UCBi2mrWuNuyYy4gbM6fU18Q', 'ABC News')
-            ],
-            'GB': [
-                ('UC16niRr50-MSBwiO3YDb3RA', 'BBC News'),
-                ('UCoMdktPbSTixAyNGwb-UYkQ', 'Sky News'),
-                ('UCIRYBXDze5krPDzAEOxFGVA', 'The Guardian'),
-                ('UC9-RFgzMIFmIeS1y1-b9Wpw', 'ITV News')
-            ],
-            'CA': [
-                ('UCuFFtG20a-I1_p2L4tJ7p4w', 'CBC News'),
-                ('UChLtXXpo4Ge1Rebe_4wBUAw', 'Global News'),
-                ('UCi7Zk9baY1tvdlgxIML8l4A', 'CTV News')
-            ],
-            'AU': [
-                ('UCVgA3pr9Qi4B502iG_2gLSA', 'ABC News Australia'),
-                ('UC5T7D-Dh1eDGtsAFCuD84rA', '7NEWS Australia'),
-                ('UCp33-V_T1aB5o9L4Ym_b4rg', '9 News Australia')
-            ],
-            'DE': [
-                ('UC5NOEUbkLheQcaaRldYW5GA', 'tagesschau'),
-                ('UC1JTaVpQhG1L1P4_K2Wde2g', 'DER SPIEGEL'),
-                ('UCb_9d2hGGu1b2a_NEg3wXAg', 'BILD')
-            ],
-            'FR': [
-                ('UCCCPCZNChQdGa9EkATeye4g', 'FRANCE 24'),
-                ('UCYpRD2-t73_9E0cq5M-OO4A', 'Le Monde'),
-                ('UCK7WvGZ3uMyqB5d2-b2rYpA', 'Brut')
-            ],
-            'IN': [
-                ('UCZFMm1mMw0F81Z37aaEzTUA', 'NDTV'),
-                ('UCYPvAwZP8pZhSMW8qs7cVCw', 'India Today'),
-                ('UC_gUM8rL-Lrg6O3adPW9K1g', 'WION')
-            ],
-            'EG': [
-                ('UCb2pc3QkNBd6XhJ4h2x4_wQ', 'Al Jazeera Mubasher'),
-                ('UC-4KnwVftfg4A0I4-iL5W8g', 'BBC News عربي'),
-                ('UCTXf0-8X22eG6L2viGf7o_A', 'Sky News Arabia'),
-                ('UC24fB-2-w2b4v-Jt7_2-2_A', 'Al Arabiya'),
-                ('UC24fB-2-w2b4v-Jt7_2-2_A', 'AlHadath')
-            ]
-        }
-
-        if country_code in youtube_channels:
-            for channel_id, channel_name in youtube_channels[country_code]:
-                rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
-                feed = self._check_rss_url(
-                    rss_url,
-                    channel_name,
-                    country_code,
-                    'news',
-                    'youtube_predefined'
-                )
-                if feed:
-                    discovered_feeds.append(feed)
-
-        return discovered_feeds
-    def _find_rss_links_on_page(self, url: str, country_code: str) -> List[DiscoveredFeed]:
-            """Find RSS feed links on a webpage."""
-            discovered_feeds = []
-
-            try:
-                response = self.session.get(url, timeout=self.timeout)
-                if response.status_code != 200:
-                    return discovered_feeds
-
-                soup = BeautifulSoup(response.content, 'html.parser')
-
-                # Look for RSS links in <link> tags
-                rss_links = soup.find_all('link', {
-                    'type': ['application/rss+xml', 'application/atom+xml', 'application/rdf+xml']
-                })
-
-                for link in rss_links:
-                    rss_url = link.get('href')
-                    if rss_url:
-                        # Convert relative URLs to absolute
-                        if rss_url.startswith('/'):
-                            rss_url = urljoin(url, rss_url)
-                        elif not rss_url.startswith('http'):
-                            continue
-
-                        title = link.get('title', 'RSS Feed')
-                        feed = self._check_rss_url(rss_url, title, country_code, 'news', 'html_link')
-                        if feed:
-                            discovered_feeds.append(feed)
-
-                # Look for RSS links in anchor tags
-                rss_anchors = soup.find_all('a', href=re.compile(r'(rss|feed|atom)', re.I))
-                for anchor in rss_anchors[:3]:  # Limit to avoid too many requests
-                    rss_url = anchor.get('href')
-                    if rss_url:
-                        if rss_url.startswith('/'):
-                            rss_url = urljoin(url, rss_url)
-                        elif not rss_url.startswith('http'):
-                            continue
-
-                        title = anchor.get_text(strip=True) or 'RSS Feed'
-                        feed = self._check_rss_url(rss_url, title, country_code, 'news', 'anchor_link')
-                        if feed:
-                            discovered_feeds.append(feed)
-
-            except Exception as e:
+                latest = datetime(*tup[:6])
+            except (ValueError, TypeError):
                 pass
+    return True, title, count, latest
 
-            return discovered_feeds
 
-    def _check_rss_url(self, url: str, title: str, country_code: str, category: str, method: str) -> Optional[DiscoveredFeed]:
-        """Check if a URL is a valid RSS feed."""
-        try:
-            response = self.session.get(url, timeout=self.timeout)
-            if response.status_code != 200:
-                return None
+def _rss_links_from_html(content: bytes, base_url: str) -> list:
+    """Extract RSS/Atom feed URLs from an HTML page."""
+    soup = BeautifulSoup(content, 'lxml')
+    urls = []
+    # <link type="…"> tags are always reliable feed declarations
+    for tag in soup.find_all('link', type=re.compile(r'rss|atom|rdf', re.I)):
+        href = tag.get('href', '')
+        if href:
+            urls.append(urljoin(base_url, href))
+    # <a> tags — only include hrefs that actually look like feed files
+    _FEED_ENDS = ('.rss', '.xml', '.atom', '/feed', '/rss', '/atom',
+                  '/feed.xml', '/rss.xml', '/atom.xml', '/feeds')
+    for tag in soup.find_all('a', href=True):
+        href = tag['href']
+        path = href.lower().split('?')[0].split('#')[0]
+        if any(path.endswith(s) for s in _FEED_ENDS):
+            if href.startswith('http'):
+                urls.append(href)
+            elif href.startswith('/'):
+                urls.append(urljoin(base_url, href))
+    return list(dict.fromkeys(urls))  # dedupe, preserve order
 
-            feed = feedparser.parse(response.content)
 
-            if not feed.entries and (not hasattr(feed, 'feed') or not feed.feed):
-                return None
+# ── Validation ────────────────────────────────────────────────────────────────
 
-            # Extract feed information
-            feed_title = getattr(feed.feed, 'title', title)
-            description = getattr(feed.feed, 'description', '')
-            language = getattr(feed.feed, 'language', self._get_language_for_country(country_code))
-
-            latest_entry_date = None
-            if feed.entries:
-                entry = feed.entries[0]
-                pub_date_parsed = (
-                        entry.get('published_parsed') or
-                        entry.get('updated_parsed')
-                )
-                if pub_date_parsed:
-                    try:
-                        latest_entry_date = datetime(*pub_date_parsed[:6])
-                    except:
-                        pass
-
-            return DiscoveredFeed(
-                title=feed_title,
-                url=url,
-                description=description[:200] + ('...' if len(description) > 200 else ''),
-                language=language,
-                country=country_code,
-                category=category,
-                source_website=urlparse(url).netloc,
-                entry_count=len(feed.entries),
-                latest_entry_date=latest_entry_date,
-                discovery_method=method
-            )
-
-        except Exception as e:
-            return None
-
-    def _search_google(self, query: str) -> List[str]:
-        """Search Google and return URLs (simplified version)."""
-        try:
-            search_url = f"https://www.google.com/search?q={quote_plus(query)}"
-            response = self.session.get(search_url, timeout=self.timeout)
-
-            if response.status_code != 200:
-                return []
-
-            soup = BeautifulSoup(response.content, 'html.parser')
-            urls = []
-
-            # Extract URLs from search results
-            for link in soup.find_all('a', href=True):
-                href = link['href']
-                if href.startswith('/url?q='):
-                    # Extract the actual URL from Google's redirect
-                    actual_url = href.split('/url?q=')[1].split('&')[0]
-                    if actual_url.startswith('http'):
-                        urls.append(actual_url)
-
-            return urls[:5]  # Return top 5 results
-
-        except Exception as e:
-            return []
-
-    def _deduplicate_feeds(self, feeds: List[DiscoveredFeed]) -> List[DiscoveredFeed]:
-        """Remove duplicate feeds based on URL."""
-        seen_urls = set()
-        unique_feeds = []
-
-        for feed in feeds:
-            if feed.url not in seen_urls:
-                seen_urls.add(feed.url)
-                unique_feeds.append(feed)
-
-        return unique_feeds
-
-    def _validate_discovered_feeds(self, feeds: List[DiscoveredFeed]) -> List[DiscoveredFeed]:
-        """Validate discovered feeds to ensure they're working."""
-        validated_feeds = []
-
-        print(f"  ✅ Validating {len(feeds)} discovered feeds...")
-
-        for feed in feeds:
-            try:
-                response = self.session.get(feed.url, timeout=self.timeout)
-                if response.status_code == 200:
-                    parsed_feed = feedparser.parse(response.content)
-                    if parsed_feed.entries or (hasattr(parsed_feed, 'feed') and parsed_feed.feed):
-                        validated_feeds.append(feed)
-            except:
-                continue
-
-        return validated_feeds
-
-    def _get_country_names(self, country_code: str) -> List[str]:
-        """Get country names for search queries."""
-        country_names = {
-            'EG': ['Egypt', 'Egyptian', 'مصر'],
-            'US': ['United States', 'America', 'USA'],
-            'GB': ['United Kingdom', 'Britain', 'UK', 'England'],
-            'CA': ['Canada', 'Canadian'],
-            'AU': ['Australia', 'Australian'],
-            'DE': ['Germany', 'German', 'Deutschland'],
-            'FR': ['France', 'French'],
-            'IN': ['India', 'Indian'],
-            'BR': ['Brazil', 'Brazilian', 'Brasil'],
-            'JP': ['Japan', 'Japanese'],
-            'ES': ['Spain', 'Spanish', 'España'],
-            'IT': ['Italy', 'Italian', 'Italia'],
-            'NL': ['Netherlands', 'Dutch', 'Holland'],
-            'SE': ['Sweden', 'Swedish'],
-            'NO': ['Norway', 'Norwegian'],
-            'DK': ['Denmark', 'Danish'],
-            'FI': ['Finland', 'Finnish']
-        }
-        return country_names.get(country_code, [country_code])
-
-    def _get_language_for_country(self, country_code: str) -> str:
-        """Get primary language for country."""
-        languages = {
-            'US': 'en', 'GB': 'en', 'CA': 'en', 'AU': 'en',
-            'DE': 'de', 'AT': 'de', 'CH': 'de',
-            'FR': 'fr', 'BE': 'fr',
-            'ES': 'es', 'MX': 'es', 'AR': 'es',
-            'IT': 'it', 'BR': 'pt', 'IN': 'en',
-            'JP': 'ja', 'NL': 'nl', 'SE': 'sv',
-            'NO': 'no', 'DK': 'da', 'FI': 'fi',
-            'EG': 'ar'
-        }
-        return languages.get(country_code, 'en')
-
-    def get_country_full_name(self, country_code: str) -> str:
-        """Get the full name of the country from the country code."""
-        country_names = {
-            'US': 'US',
-            'GB': 'UK',
-            'CA': 'Canada',
-            'AU': 'Australia',
-            'DE': 'Germany',
-            'FR': 'France',
-            'IN': 'India',
-            'BR': 'Brazil',
-            'JP': 'Japan',
-            'ES': 'Spain',
-            'IT': 'Italy',
-            'EG': 'Egypt',
-            'CN': 'China',
-            'RU': 'Russia',
-            'ZA': 'SouthAfrica',
-            'SA': 'SaudiArabia',
-            'AE': 'Uae',
-            'TR': 'Turkey',
-            'AR': 'Argentina',
-            'MX': 'Mexico',
-            'SE': 'Sweden',
-            'NO': 'Norway',
-            'DK': 'Denmark',
-            'FI': 'Finland',
-            'NL': 'Netherlands',
-            'BE': 'Belgium',
-            'AT': 'Austria',
-            'CH': 'Switzerland',
-            'PL': 'Poland',
-            'CZ': 'CzechRepublic',
-            'HU': 'Hungary',
-            'GR': 'Greece',
-            'NG': 'Nigeria',
-            'KE': 'Kenya',
-        }
-        return country_names.get(country_code, country_code)
-
-class RSSValidator:
-    def __init__(self, max_workers=10, timeout=15, days_threshold=7):
-        self.max_workers = max_workers
-        self.timeout = timeout
-        self.days_threshold = days_threshold
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml, */*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate',
-            'Cache-Control': 'no-cache'
-        })
-        self.print_lock = Lock()
-
-    def get_feeds_from_file(self, file_path: str) -> List[FeedInfo]:
-        """Extracts all RssService information from the given Kotlin file."""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            # Enhanced regex to capture all RssService parameters
-            rss_pattern = re.compile(
-                r'RssService\(\s*"([^"]*)",\s*"([^"]*)",\s*RssCategory\.(\w+),\s*"([^"]*)",\s*"([^"]*)"\s*\)'
-            )
-
-            feeds = []
-            matches = rss_pattern.findall(content)
-
-            for match in matches:
-                name, url, category, language, country = match
-                feeds.append(FeedInfo(name, url, category, language, country))
-
-            return feeds
-
-        except FileNotFoundError:
-            print(f"Error: The file at {file_path} was not found.")
-            return []
-        except Exception as e:
-            print(f"Error reading file: {e}")
-            return []
-
-    def validate_feed(self, feed_info: FeedInfo) -> ValidationResult:
-        """Validates a single RSS feed with comprehensive checks."""
-        result = ValidationResult(feed_info=feed_info)
-        start_time = time.time()
-
-        try:
-            # Make HTTP request
-            response = self.session.get(
-                feed_info.url,
-                timeout=self.timeout,
-                allow_redirects=True,
-                stream=False
-            )
-
-            result.response_time = time.time() - start_time
-            result.response_code = response.status_code
-            result.content_type = response.headers.get('content-type', '')
-
-            if response.status_code != 200:
-                result.error_message = f"HTTP {response.status_code}"
+async def _validate_one(session: aiohttp.ClientSession, feed: FeedInfo,
+                         timeout: int, days: int) -> ValidationResult:
+    result = ValidationResult(feed_info=feed)
+    t0 = time.monotonic()
+    try:
+        async with session.get(
+            feed.url,
+            timeout=aiohttp.ClientTimeout(total=timeout),
+            allow_redirects=True,
+        ) as resp:
+            result.response_time = time.monotonic() - t0
+            result.response_code = resp.status
+            if resp.status != 200:
+                result.error_message = f'HTTP {resp.status}'
                 return result
-
             result.is_accessible = True
-
-            # Parse the feed
-            feed = feedparser.parse(response.content)
-
-            # Check if parsing was successful
-            if hasattr(feed, 'bozo') and feed.bozo and not feed.entries:
-                result.error_message = f"Feed parsing failed: {getattr(feed, 'bozo_exception', 'Unknown error')}"
-                return result
-
-            result.is_valid_feed = True
-            result.feed_title = getattr(feed.feed, 'title', 'No title')
-            result.feed_description = getattr(feed.feed, 'description', 'No description')
-            result.entry_count = len(feed.entries)
-
-            # Check for recent content
-            if feed.entries:
-                latest_entry = feed.entries[0]
-                pub_date_parsed = (
-                        latest_entry.get('published_parsed') or
-                        latest_entry.get('updated_parsed') or
-                        latest_entry.get('created_parsed')
-                )
-
-                if pub_date_parsed:
-                    try:
-                        result.latest_entry_date = datetime(*pub_date_parsed[:6])
-                        threshold_date = datetime.now() - timedelta(days=self.days_threshold)
-                        result.has_recent_content = result.latest_entry_date > threshold_date
-                    except (ValueError, TypeError) as e:
-                        result.error_message = f"Date parsing error: {e}"
-                else:
-                    # If no date found, assume it's recent
-                    result.has_recent_content = True
-            else:
-                result.error_message = "No entries found in feed"
-
-        except requests.Timeout:
-            result.error_message = "Request timeout"
-            result.response_time = self.timeout
-        except requests.ConnectionError:
-            result.error_message = "Connection error"
-            result.response_time = time.time() - start_time
-        except requests.RequestException as e:
-            result.error_message = f"Request error: {str(e)}"
-            result.response_time = time.time() - start_time
-        except Exception as e:
-            result.error_message = f"Unexpected error: {str(e)}"
-            result.response_time = time.time() - start_time
-
+            content = await resp.read()
+    except asyncio.TimeoutError:
+        result.error_message = 'Timeout'
+        result.response_time = timeout
+        return result
+    except aiohttp.ClientError as exc:
+        result.error_message = f'{type(exc).__name__}'
+        result.response_time = time.monotonic() - t0
         return result
 
-    def get_feed_language(self, feed_info: FeedInfo) -> Optional[str]:
-        """Detects the language of the feed content."""
-        try:
-            response = self.session.get(feed_info.url, timeout=self.timeout)
-            if response.status_code != 200:
-                return None
+    is_valid, title, count, latest = _parse_feed(content)
+    if not is_valid:
+        result.error_message = 'Not a valid RSS/Atom feed'
+        return result
 
-            feed = feedparser.parse(response.content)
-            if not feed.entries:
-                return None
+    result.is_valid_feed = True
+    result.feed_title = title
+    result.entry_count = count
+    result.latest_entry_date = latest
 
-            # Concatenate titles and summaries of a few entries
-            content_sample = " ".join(
-                [entry.get('title', '') + ' ' + entry.get('summary', '') for entry in feed.entries[:5]]
-            )
+    if latest:
+        result.has_recent_content = latest > datetime.now() - timedelta(days=days)
+    elif count > 0:
+        result.has_recent_content = True   # no date info → assume fresh
+    else:
+        result.error_message = 'Feed has no entries'
 
-            if not content_sample.strip():
-                return None
+    return result
 
-            return detect(content_sample)
 
-        except Exception:
-            return None
+async def validate_all(feeds: list, workers: int, timeout: int, days: int,
+                        show_progress: bool = True) -> list:
+    sem = asyncio.Semaphore(workers)
+    completed = 0
+    connector = aiohttp.TCPConnector(limit=workers, limit_per_host=3)
 
-    def validate_feeds_parallel(self, feeds: List[FeedInfo], show_progress=True) -> List[ValidationResult]:
-        """Validates multiple feeds in parallel."""
-        results = []
-        completed = 0
-        total = len(feeds)
-
-        def validate_with_progress(feed_info):
+    async with aiohttp.ClientSession(connector=connector, headers=FETCH_HEADERS) as session:
+        async def bounded(feed):
             nonlocal completed
-            result = self.validate_feed(feed_info)
-
+            async with sem:
+                r = await _validate_one(session, feed, timeout, days)
+            completed += 1
             if show_progress:
-                with self.print_lock:
-                    completed += 1
-                    status = "✓" if result.is_accessible and result.is_valid_feed else "✗"
-                    print(f"[{completed:3d}/{total:3d}] {status} {feed_info.name[:50]:<50} ({result.response_time:.2f}s)")
+                sym = '✓' if r.is_valid_feed else '✗'
+                print(f'[{completed:3d}/{len(feeds):3d}] {sym} {feed.name[:55]:<55} ({r.response_time:.1f}s)')
+            return r
 
-            return result
+        return list(await asyncio.gather(*[bounded(f) for f in feeds]))
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [executor.submit(validate_with_progress, feed) for feed in feeds]
-            for future in concurrent.futures.as_completed(futures):
-                results.append(future.result())
 
-        return results
-class ReportGenerator:
-    def __init__(self, results: List[ValidationResult]):
-        self.results = results
-        self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# ── Discovery ─────────────────────────────────────────────────────────────────
 
-    def generate_console_report(self):
-        """Generates a comprehensive console report."""
-        total = len(self.results)
-        accessible = sum(1 for r in self.results if r.is_accessible)
-        valid_feeds = sum(1 for r in self.results if r.is_valid_feed)
-        recent_content = sum(1 for r in self.results if r.has_recent_content)
+async def _probe_feed_url(session: aiohttp.ClientSession, url: str, timeout: int,
+                           country: str, hint_name: str, category: str,
+                           method: str) -> Optional[FeedInfo]:
+    """Fetch url once; return FeedInfo only if it's a working feed."""
+    try:
+        async with session.get(
+            url, timeout=aiohttp.ClientTimeout(total=timeout), allow_redirects=True
+        ) as resp:
+            if resp.status != 200:
+                return None
+            content = await resp.read()
+    except Exception:
+        return None
 
-        print("\n" + "="*80)
-        print(f"RSS FEED VALIDATION REPORT - {self.timestamp}")
-        print("="*80)
+    is_valid, title, _, _ = _parse_feed(content)
+    if not is_valid:
+        return None
 
-        print(f"\nOVERALL STATISTICS:")
-        print(f"Total feeds tested: {total}")
-        print(f"Accessible feeds: {accessible} ({accessible/total*100:.1f}%)")
-        print(f"Valid RSS feeds: {valid_feeds} ({valid_feeds/total*100:.1f}%)")
-        print(f"Feeds with recent content: {recent_content} ({recent_content/total*100:.1f}%)")
+    lang = COUNTRIES.get(country, {}).get('language', 'en')
+    name = (title or hint_name)[:80]
+    return FeedInfo(name=name, url=url, category=category, language=lang, country=country)
 
-        # Performance statistics
-        accessible_results = [r for r in self.results if r.is_accessible]
-        if accessible_results:
-            avg_time = sum(r.response_time for r in accessible_results) / len(accessible_results)
-            max_time = max(r.response_time for r in accessible_results)
-            min_time = min(r.response_time for r in accessible_results)
-            print(f"\nPERFORMANCE:")
-            print(f"Average response time: {avg_time:.2f}s")
-            print(f"Fastest response: {min_time:.2f}s")
-            print(f"Slowest response: {max_time:.2f}s")
 
-        # Country breakdown
-        country_stats = {}
-        for result in self.results:
-            country = result.feed_info.country
-            if country not in country_stats:
-                country_stats[country] = {'total': 0, 'working': 0, 'valid': 0, 'recent': 0}
+async def _discover_domain(session: aiohttp.ClientSession, domain: str,
+                            country: str, timeout: int) -> list:
+    base = f'https://{domain}'
+    found = []
 
-            country_stats[country]['total'] += 1
-            if result.is_accessible:
-                country_stats[country]['working'] += 1
-            if result.is_valid_feed:
-                country_stats[country]['valid'] += 1
-            if result.has_recent_content:
-                country_stats[country]['recent'] += 1
+    # Probe common RSS paths
+    path_results = await asyncio.gather(
+        *[_probe_feed_url(session, f'{base}{p}', timeout, country, domain, 'NEWS', 'path_scan')
+          for p in COMMON_RSS_PATHS],
+        return_exceptions=True,
+    )
+    found.extend(r for r in path_results if isinstance(r, FeedInfo))
 
-        print(f"\nCOUNTRY BREAKDOWN:")
-        for country, stats in sorted(country_stats.items()):
-            success_rate = stats['valid'] / stats['total'] * 100 if stats['total'] > 0 else 0
-            print(f"{country}: {stats['valid']}/{stats['total']} valid ({success_rate:.1f}%)")
+    # Scrape homepage for embedded RSS links
+    try:
+        async with session.get(base, timeout=aiohttp.ClientTimeout(total=timeout)) as resp:
+            if resp.status == 200:
+                html = await resp.read()
+                rss_urls = _rss_links_from_html(html, base)
+                link_results = await asyncio.gather(
+                    *[_probe_feed_url(session, u, timeout, country, domain, 'NEWS', 'html_link')
+                      for u in rss_urls[:6]],
+                    return_exceptions=True,
+                )
+                found.extend(r for r in link_results if isinstance(r, FeedInfo))
+    except Exception:
+        pass
 
-        # Failed feeds
-        failed_feeds = [r for r in self.results if not r.is_accessible or not r.is_valid_feed or not r.has_recent_content]
-        if failed_feeds:
-            print(f"\nPROBLEMATIC FEEDS ({len(failed_feeds)}):")
-            for result in failed_feeds:
-                issues = []
-                if not result.is_accessible:
-                    issues.append("not accessible")
-                if result.is_accessible and not result.is_valid_feed:
-                    issues.append("invalid RSS")
-                if result.is_valid_feed and not result.has_recent_content:
-                    issues.append("outdated content")
+    return found
 
-                print(f"  ✗ {result.feed_info.name} ({result.feed_info.country})")
-                print(f"    URL: {result.feed_info.url}")
-                print(f"    Issues: {', '.join(issues)}")
-                if result.error_message:
-                    print(f"    Error: {result.error_message}")
-                if result.latest_entry_date:
-                    print(f"    Latest entry: {result.latest_entry_date.strftime('%Y-%m-%d %H:%M:%S')}")
-                print()
 
-    def save_csv_report(self, filename: str):
-        """Saves detailed results to CSV file."""
-        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-            fieldnames = [
-                'name', 'url', 'category', 'language', 'country',
-                'is_accessible', 'response_code', 'response_time', 'is_valid_feed',
-                'has_recent_content', 'entry_count', 'latest_entry_date',
-                'error_message', 'content_type', 'feed_title'
-            ]
+async def _discover_youtube(session: aiohttp.ClientSession, country: str, timeout: int) -> list:
+    channels = COUNTRIES.get(country, {}).get('youtube', [])
+    if not channels:
+        return []
+    results = await asyncio.gather(
+        *[_probe_feed_url(
+            session,
+            f'https://www.youtube.com/feeds/videos.xml?channel_id={cid}',
+            timeout, country, name, 'NEWS', 'youtube',
+          ) for cid, name in channels],
+        return_exceptions=True,
+    )
+    return [r for r in results if isinstance(r, FeedInfo)]
 
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
 
-            for result in self.results:
-                row = {
-                    'name': result.feed_info.name,
-                    'url': result.feed_info.url,
-                    'category': result.feed_info.category,
-                    'language': result.feed_info.language,
-                    'country': result.feed_info.country,
-                    'is_accessible': result.is_accessible,
-                    'response_code': result.response_code,
-                    'response_time': f"{result.response_time:.2f}",
-                    'is_valid_feed': result.is_valid_feed,
-                    'has_recent_content': result.has_recent_content,
-                    'entry_count': result.entry_count,
-                    'latest_entry_date': result.latest_entry_date.isoformat() if result.latest_entry_date else '',
-                    'error_message': result.error_message or '',
-                    'content_type': result.content_type or '',
-                    'feed_title': result.feed_title or ''
-                }
-                writer.writerow(row)
+async def _google_search_async(session: aiohttp.ClientSession, query: str,
+                               num: int = 8) -> list:
+    """
+    Async Google HTML scraping with Chrome UA — no API key, timeouts work reliably.
+    Returns a list of result page URLs.
+    """
+    url = f'https://www.google.com/search?q={quote_plus(query)}&num={num}&hl=en&gl=us'
+    try:
+        async with session.get(
+            url,
+            headers=GOOGLE_HEADERS,
+            timeout=aiohttp.ClientTimeout(total=15),
+            allow_redirects=True,
+        ) as resp:
+            if resp.status != 200:
+                return []
+            html = await resp.read()
+    except Exception:
+        return []
 
-    def save_json_report(self, filename: str):
-        """Saves results to JSON file."""
-        json_data = {
-            'timestamp': self.timestamp,
-            'summary': {
-                'total_feeds': len(self.results),
-                'accessible_feeds': sum(1 for r in self.results if r.is_accessible),
-                'valid_feeds': sum(1 for r in self.results if r.is_valid_feed),
-                'recent_content_feeds': sum(1 for r in self.results if r.has_recent_content)
-            },
-            'results': []
-        }
+    soup = BeautifulSoup(html, 'lxml')
+    urls = []
+    for a in soup.find_all('a', href=True):
+        href = a['href']
+        if href.startswith('/url?q='):
+            actual = href.split('/url?q=')[1].split('&')[0]
+            if actual.startswith('http') and 'google.com' not in actual:
+                urls.append(actual)
+    return urls[:num]
 
-        for result in self.results:
-            result_dict = asdict(result)
-            # Convert datetime to string for JSON serialization
-            if result_dict['latest_entry_date']:
-                result_dict['latest_entry_date'] = result.latest_entry_date.isoformat()
-            json_data['results'].append(result_dict)
 
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, indent=2, ensure_ascii=False)
-class DiscoveryReportGenerator:
-    def __init__(self, discovered_feeds: List[DiscoveredFeed]):
-        self.discovered_feeds = discovered_feeds
-        self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+async def _discover_search(session: aiohttp.ClientSession, country: str,
+                            categories: list, timeout: int) -> list:
+    """
+    Async Google HTML search (Chrome UA, no API key) to find news RSS feeds.
+    All I/O is async — timeouts are guaranteed by aiohttp, no threads involved.
+    """
+    country_name = COUNTRIES.get(country, {}).get('full_name', country)
 
-    def generate_console_report(self):
-            """Generate console report for discovered feeds."""
-            if not self.discovered_feeds:
-                print("\n❌ No new feeds discovered.")
-                return
+    # Diverse queries targeting actual RSS feed URLs
+    queries: list = []
+    for cat in categories:
+        queries.append(f'{country_name} {cat} news site RSS feed')
+        queries.append(f'site:{country.lower()} {cat} news RSS OR feed.xml OR atom.xml')
+    queries.append(f'{country_name} news RSS feeds')
+    queries.append(f'top news {country_name} RSS')
 
-            print(f"\n🎉 DISCOVERED {len(self.discovered_feeds)} NEW FEEDS")
-            print("=" * 60)
+    page_urls: list = []
+    async with _get_search_sem():
+        for i, q in enumerate(queries[:4], 1):
+            print(f'  [{country}] search {i}/4: "{q[:60]}"...', flush=True)
+            urls = await _google_search_async(session, q)
+            if not urls:
+                print(f'  [{country}] no results (blocked/CAPTCHA), skipping query', flush=True)
+            page_urls.extend(urls)
+            await asyncio.sleep(2)  # polite pause between queries
 
-            # Group by country
-            by_country = {}
-            for feed in self.discovered_feeds:
-                if feed.country not in by_country:
-                    by_country[feed.country] = []
-                by_country[feed.country].append(feed)
-
-            for country, feeds in by_country.items():
-                print(f"\n{country} ({len(feeds)} feeds):")
-                for feed in feeds:
-                    print(f"  📰 {feed.title}")
-                    print(f"      URL: {feed.url}")
-                    print(f"      Category: {feed.category}")
-                    print(f"      Entries: {feed.entry_count}")
-                    if feed.latest_entry_date:
-                        print(f"      Latest: {feed.latest_entry_date.strftime('%Y-%m-%d')}")
-                    print(f"      Method: {feed.discovery_method}")
-                    print()
-
-    def generate_kotlin_code(self, country_code: str) -> str:
-        """Generate Kotlin code for discovered feeds."""
-        country_feeds = [f for f in self.discovered_feeds if f.country == country_code]
-
-        if not country_feeds:
-            return f"// No new feeds discovered for {country_code}"
-
-        kotlin_code = f"// Discovered feeds for {country_code} - {self.timestamp}\n"
-        kotlin_code += f"// Add these to your get{country_code}RssServices() function:\n\n"
-
-        for feed in country_feeds:
-            # Clean up the title for use as service name
-            clean_title = re.sub(r'[^\w\s]', '', feed.title)
-            clean_title = ' '.join(clean_title.split())
-
-            kotlin_code += f'RssService("{clean_title}", "{feed.url}", RssCategory.{feed.category.upper()}, "{feed.language}", "{feed.country}"),\n'
-
-        return kotlin_code
-
-    def save_discovery_report(self, filename: str):
-        """Save discovery report to JSON file."""
-        report_data = {
-            'timestamp': self.timestamp,
-            'total_discovered': len(self.discovered_feeds),
-            'feeds': []
-        }
-
-        for feed in self.discovered_feeds:
-            feed_dict = asdict(feed)
-            if feed_dict['latest_entry_date']:
-                feed_dict['latest_entry_date'] = feed.latest_entry_date.isoformat()
-            report_data['feeds'].append(feed_dict)
-
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(report_data, f, indent=2, ensure_ascii=False)
-
-class KotlinFileUpdater:
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-
-    def add_discovered_feeds_to_file(self, discovered_feeds: List[DiscoveredFeed]):
-        """Add discovered feeds to the correct country functions in the Kotlin file."""
-        if not discovered_feeds:
-            print("No feeds to add to Kotlin file.")
-            return
-
+    found = []
+    seen: set = set()
+    for page_url in list(dict.fromkeys(page_urls))[:12]:
         try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            # Group feeds by country
-            feeds_by_country = {}
-            for feed in discovered_feeds:
-                country = feed.country
-                if country not in feeds_by_country:
-                    feeds_by_country[country] = []
-                feeds_by_country[country].append(feed)
-
-            # Create backup
-            backup_path = f"{self.file_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            with open(backup_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            print(f"Backup created: {backup_path}")
-
-            # Update content for each country
-            updated_content = content
-            for country_code, feeds in feeds_by_country.items():
-                updated_content = self._add_feeds_to_country_function(updated_content, country_code, feeds)
-
-            # Write updated content
-            with open(self.file_path, 'w', encoding='utf-8') as f:
-                f.write(updated_content)
-
-            total_added = sum(len(feeds) for feeds in feeds_by_country.values())
-            print(f"Successfully added {total_added} new feeds to {self.file_path}")
-
-        except Exception as e:
-            print(f"Error updating Kotlin file: {e}")
-
-    def _add_feeds_to_country_function(self, content: str, country_code: str, feeds: List[DiscoveredFeed]) -> str:
-        """Add feeds to the specific country function."""
-        discovery = FeedDiscovery()
-        country_full_name = discovery.get_country_full_name(country_code)
-
-        # Find the country function
-        function_patterns = [
-            f'private fun get{country_code}RssServices\\(\\): List<RssService> = listOf\\(',
-            f'private fun get{country_code.title()}RssServices\\(\\): List<RssService> = listOf\\(',
-            f'private fun get{country_full_name}RssServices\\(\\): List<RssService> = listOf\\(',
-        ]
-
-        # Special cases for country function names
-        function_name_map = {
-            'US': 'getUSRssServices',
-            'GB': 'getUKRssServices',
-            'UK': 'getUKRssServices'
-        }
-
-        if country_code in function_name_map:
-            function_patterns.append(f'private fun {function_name_map[country_code]}\\(\\): List<RssService> = listOf\\(')
-
-        function_start = -1
-        for pattern in function_patterns:
-            match = re.search(pattern, content)
-            if match:
-                function_start = match.end()
-                break
-
-        if function_start == -1:
-            print(f"Warning: Could not find function for country {country_code}")
-            return content
-
-        # Find the end of the function (closing parenthesis and bracket)
-        paren_count = 1
-        i = function_start
-        while i < len(content) and paren_count > 0:
-            if content[i] == '(':
-                paren_count += 1
-            elif content[i] == ')':
-                paren_count -= 1
-            i += 1
-
-        if paren_count > 0:
-            print(f"Warning: Could not find end of function for country {country_code}")
-            return content
-
-        function_end = i - 1  # Position of the closing parenthesis
-
-        # Find the last RssService entry to insert after it
-        function_content = content[function_start:function_end]
-
-        # Look for the last RssService entry
-        last_service_match = None
-        for match in re.finditer(r'RssService\([^)]+\)', function_content):
-            last_service_match = match
-
-        if last_service_match:
-            insert_position = function_start + last_service_match.end()
-
-            # Generate new RSS service entries
-            new_entries = []
-            for feed in feeds:
-                # Clean up the title for use as service name
-                clean_title = re.sub(r'[^\w\s-]', '', feed.title)
-                clean_title = ' '.join(clean_title.split())
-                if len(clean_title) > 50:
-                    clean_title = clean_title[:50] + "..."
-
-                # Determine category section
-                category = feed.category.upper()
-                if category not in ['NEWS', 'SPORTS']:
-                    category = 'NEWS'  # Default to NEWS
-
-                new_entry = f',\n    RssService("{clean_title}", "{feed.url}", RssCategory.{category}, "{feed.language}", "{feed.country}")'
-                new_entries.append(new_entry)
-
-            # Insert the new entries
-            new_content = (
-                    content[:insert_position] +
-                    ''.join(new_entries) +
-                    content[insert_position:]
+            async with session.get(
+                page_url, timeout=aiohttp.ClientTimeout(total=timeout),
+            ) as resp:
+                if resp.status != 200:
+                    continue
+                html = await resp.read()
+            rss_urls = [u for u in _rss_links_from_html(html, page_url) if u not in seen]
+            results = await asyncio.gather(
+                *[_probe_feed_url(session, u, timeout, country, page_url, 'NEWS', 'search')
+                  for u in rss_urls[:5]],
+                return_exceptions=True,
             )
+            for r in results:
+                if isinstance(r, FeedInfo):
+                    found.append(r)
+                    seen.add(r.url)
+        except Exception:
+            continue
 
-            print(f"Added {len(feeds)} feeds to {country_code} function")
-            return new_content
-        else:
-            print(f"Warning: Could not find existing RssService entries for country {country_code}")
-            return content
+    return found
 
-    def remove_problematic_feeds(self, results: List[ValidationResult], criteria: str = 'strict', days_threshold: int = 3):
-        """Remove problematic feeds from the Kotlin file."""
-        feeds_to_remove = []
 
-        for result in results:
-            should_remove = False
+async def discover_country(country: str, categories: list, timeout: int, workers: int) -> list:
+    cfg = COUNTRIES.get(country)
+    if not cfg:
+        print(f'  Unknown country: {country} (add it to COUNTRIES dict)')
+        return []
 
-            if criteria == 'strict':
-                should_remove = (not result.is_accessible or
-                                 not result.is_valid_feed or
-                                 not result.has_recent_content)
-            elif criteria == 'moderate':
-                should_remove = (not result.is_accessible or
-                                 not result.is_valid_feed)
-            elif criteria == 'loose':
-                should_remove = not result.is_accessible
-            elif criteria == 'old':
-                if result.latest_entry_date:
-                    should_remove = result.latest_entry_date < datetime.now() - timedelta(days=days_threshold)
+    print(f'\n  [{country}] scanning domains, YouTube, search...')
+    connector = aiohttp.TCPConnector(limit=workers, limit_per_host=2)
 
-            if should_remove:
-                feeds_to_remove.append(result.feed_info.url)
+    async with aiohttp.ClientSession(connector=connector, headers=FETCH_HEADERS) as session:
+        domain_results, yt_results, search_results = await asyncio.gather(
+            asyncio.gather(*[_discover_domain(session, d, country, timeout)
+                             for d in cfg['domains']], return_exceptions=True),
+            _discover_youtube(session, country, timeout),
+            _discover_search(session, country, categories, timeout),
+        )
 
-        if not feeds_to_remove:
-            print(f"No feeds to remove based on '{criteria}' criteria.")
-            return
+    all_feeds: list = []
+    for r in domain_results:
+        if isinstance(r, list):
+            all_feeds.extend(r)
+    all_feeds.extend(yt_results)
+    all_feeds.extend(search_results)
 
-        print(f"\nRemoving {len(feeds_to_remove)} feeds based on '{criteria}' criteria:")
-        for url in feeds_to_remove:
-            print(f"  - {url}")
+    # Deduplicate by URL
+    seen: set = set()
+    unique = [f for f in all_feeds if not (f.url in seen or seen.add(f.url))]  # type: ignore[func-returns-value]
 
-        # Create backup
-        backup_path = f"{self.file_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        with open(self.file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+    print(f'  [{country}] found {len(unique)} feeds')
+    return unique
 
-        with open(backup_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"\nBackup created: {backup_path}")
 
-        # Remove problematic feeds
-        lines = content.split('\n')
-        new_lines = []
-        removed_count = 0
+# ── Kotlin file manipulation ──────────────────────────────────────────────────
 
-        for line in lines:
-            should_remove_line = False
-            for url in feeds_to_remove:
-                if f'"{url}"' in line:
-                    should_remove_line = True
-                    removed_count += 1
-                    break
+_RSS_RE = re.compile(
+    r'RssService\(\s*"([^"]*)"\s*,\s*"([^"]*)"\s*,\s*RssCategory\.(\w+)\s*,'
+    r'\s*"([^"]*)"\s*,\s*"([^"]*)"\s*\)'
+)
 
-            if not should_remove_line:
-                new_lines.append(line)
 
-        # Write updated content
-        with open(self.file_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(new_lines))
+def read_feeds_from_kotlin(path: str) -> list:
+    with open(path, encoding='utf-8') as f:
+        content = f.read()
+    return [FeedInfo(name, url, cat, lang, country)
+            for name, url, cat, lang, country in _RSS_RE.findall(content)]
 
-        print(f"Successfully removed {removed_count} feed entries from {self.file_path}")
 
-    def sort_feeds_by_language(self, feeds: List[FeedInfo], validator: RSSValidator):
-        """Sorts feeds in the Kotlin file by native language."""
-        print("Starting to sort feeds by language...")
-        try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            print("  - Read Kotlin file content.")
+def _backup(path: str) -> None:
+    stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_path = f'{path}.backup.{stamp}'
+    with open(path, encoding='utf-8') as f:
+        data = f.read()
+    with open(backup_path, 'w', encoding='utf-8') as f:
+        f.write(data)
+    print(f'  Backup: {backup_path}')
 
-            # Group feeds by country
-            feeds_by_country = {}
-            for feed in feeds:
-                country = feed.country
-                if country not in feeds_by_country:
-                    feeds_by_country[country] = []
-                feeds_by_country[country].append(feed)
-            print(f"  - Grouped feeds into {len(feeds_by_country)} countries.")
 
-            # Create backup
-            backup_path = f"{self.file_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            with open(backup_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            print(f"  - Backup created: {backup_path}")
+def add_feeds_to_kotlin(path: str, feeds: list) -> None:
+    if not feeds:
+        return
 
-            # Update content for each country
-            updated_content = content
-            for country_code, country_feeds in feeds_by_country.items():
-                print(f"  - Processing country: {country_code}")
-                updated_content = self._sort_country_feeds(updated_content, country_code, country_feeds, validator)
+    with open(path, encoding='utf-8') as f:
+        content = f.read()
 
-            # Write updated content
-            with open(self.file_path, 'w', encoding='utf-8') as f:
-                f.write(updated_content)
+    # Collect all URLs already present in the file to avoid duplicates
+    existing_urls = {url for _, url, _, _, _ in _RSS_RE.findall(content)}
+    original_count = len(feeds)
+    feeds = [f for f in feeds if f.url not in existing_urls]
+    skipped = original_count - len(feeds)
+    if skipped:
+        print(f'  Skipped {skipped} already-present URLs ({len(feeds)} new feeds to add)')
+    if not feeds:
+        print('  All discovered feeds already exist in the file, nothing to add.')
+        return
 
-            print(f"Successfully sorted feeds in {self.file_path}")
+    _backup(path)
 
-        except Exception as e:
-            print(f"Error sorting feeds in Kotlin file: {e}")
+    by_country: dict = {}
+    for feed in feeds:
+        by_country.setdefault(feed.country, []).append(feed)
 
-    def _sort_country_feeds(self, content: str, country_code: str, feeds: List[FeedInfo], validator: RSSValidator) -> str:
-        """Sorts feeds for a specific country function."""
-        print(f"    - Sorting feeds for {country_code}...")
+    updated = content
+    for country, country_feeds in by_country.items():
+        fn = COUNTRIES.get(country, {}).get('fn')
+        if not fn:
+            print(f'  Warning: no function name for {country}, add it to COUNTRIES dict')
+            continue
 
-        native_language = self._get_language_for_country(country_code)
-        print(f"      - Native language for {country_code} is {native_language}.")
-        native_feeds = []
-        other_feeds = []
+        fn_pattern = re.compile(
+            rf'private fun {re.escape(fn)}\(\)\s*:\s*List<RssService>\s*=\s*listOf\('
+        )
+        m = fn_pattern.search(updated)
+        if not m:
+            print(f'  Warning: {fn}() not found in {path}')
+            continue
 
-        for feed in feeds:
-            content_language = validator.get_feed_language(feed)
-            if content_language and content_language.startswith(native_language):
-                print(f"        - Feed '{feed.name}' is in native language ({content_language}).")
-                native_feeds.append(feed)
-            else:
-                print(f"        - Feed '{feed.name}' is not in native language (language: {content_language}).")
-                other_feeds.append(feed)
+        # Walk forward from listOf( to find the matching closing paren
+        i, depth = m.end(), 1
+        while i < len(updated) and depth > 0:
+            if updated[i] == '(':
+                depth += 1
+            elif updated[i] == ')':
+                depth -= 1
+            i += 1
+        closing = i - 1
 
-        sorted_feeds = native_feeds + other_feeds
-        print(f"      - Sorting complete. {len(native_feeds)} native feeds, {len(other_feeds)} other feeds.")
+        # Find the last existing RssService entry before closing
+        last_match = None
+        for match in _RSS_RE.finditer(updated[m.end():closing]):
+            last_match = match
+        if last_match is None:
+            print(f'  Warning: {fn}() has no existing entries, skipping')
+            continue
 
-        # Find the country function
-        function_patterns = [
-            f'private fun get{country_code}RssServices\\(\\): List<RssService> = listOf\\((.*?)\\)',
-            f'private fun get{country_code.title()}RssServices\\(\\): List<RssService> = listOf\\((.*?)\\)',
-        ]
+        insert_at = m.end() + last_match.end()
+        new_entries = ''.join(
+            f',\n    RssService("{f.name}", "{f.url}", RssCategory.{f.category}, '
+            f'"{f.language}", "{f.country}")'
+            for f in country_feeds
+        )
+        updated = updated[:insert_at] + new_entries + updated[insert_at:]
+        print(f'  Added {len(country_feeds)} feeds to {fn}()')
 
-        # Special cases for country function names
-        function_name_map = {
-            'US': 'getUSRssServices',
-            'GB': 'getUKRssServices',
-            'UK': 'getUKRssServices'
-        }
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(updated)
 
-        if country_code in function_name_map:
-            function_patterns.append(f'private fun {function_name_map[country_code]}\\(\\): List<RssService> = listOf\\((.*?)\\)')
 
-        for pattern in function_patterns:
-            match = re.search(pattern, content, re.DOTALL)
-            if match:
-                function_content = match.group(1)
-                
-                # Create a mapping of URL to the original RssService string
-                url_to_service_string = {}
-                service_matches = re.findall(r'RssService\(.*?\)', function_content, re.DOTALL)
-                for service_string in service_matches:
-                    url_match = re.search(r'"(https?://[^"]+)"', service_string)
-                    if url_match:
-                        url_to_service_string[url_match.group(1)] = service_string
+def remove_feeds_from_kotlin(path: str, urls: list) -> None:
+    if not urls:
+        print('No feeds to remove.')
+        return
 
-                # Build the new sorted list of RssService strings
-                sorted_service_strings = []
-                for feed in sorted_feeds:
-                    if feed.url in url_to_service_string:
-                        sorted_service_strings.append(url_to_service_string[feed.url])
+    _backup(path)
+    url_set = set(urls)
 
-                sorted_function_content = ",\n    ".join(sorted_service_strings)
-                if sorted_function_content:
-                    sorted_function_content = "\n    " + sorted_function_content + "\n"
+    with open(path, encoding='utf-8') as f:
+        lines = f.readlines()
 
-                new_function_string = match.group(0).replace(function_content, sorted_function_content)
-                return content.replace(match.group(0), new_function_string)
+    kept = [l for l in lines if not any(f'"{u}"' in l for u in url_set)]
+    removed = len(lines) - len(kept)
 
-        print(f"Warning: Could not find function for country {country_code}")
-        return content
+    with open(path, 'w', encoding='utf-8') as f:
+        f.writelines(kept)
 
-    def _get_language_for_country(self, country_code: str) -> str:
-        """Get primary language for country."""
-        languages = {
-            'US': 'en', 'GB': 'en', 'CA': 'en', 'AU': 'en',
-            'DE': 'de', 'AT': 'de', 'CH': 'de',
-            'FR': 'fr', 'BE': 'fr',
-            'ES': 'es', 'MX': 'es', 'AR': 'es',
-            'IT': 'it', 'BR': 'pt', 'IN': 'hi',
-            'JP': 'ja', 'NL': 'nl', 'SE': 'sv',
-            'NO': 'no', 'DK': 'da', 'FI': 'fi',
-            'EG': 'ar'
-        }
-        return languages.get(country_code, 'en')
+    print(f'Removed {removed} feed line(s) from {path}')
 
-def main():
+
+def generate_kotlin_code(feeds: list, country: str) -> str:
+    fn = COUNTRIES.get(country, {}).get('fn', f'get{country}RssServices')
+    country_feeds = [f for f in feeds if f.country == country]
+    if not country_feeds:
+        return f'// No feeds discovered for {country}'
+    lines = [f'// Discovered feeds for {country} — add to {fn}():']
+    for f in country_feeds:
+        lines.append(
+            f'RssService("{f.name}", "{f.url}", RssCategory.{f.category}, '
+            f'"{f.language}", "{f.country}"),'
+        )
+    return '\n'.join(lines)
+
+
+# ── Reports ───────────────────────────────────────────────────────────────────
+
+def print_validation_report(results: list) -> None:
+    total = len(results)
+    accessible = sum(1 for r in results if r.is_accessible)
+    valid = sum(1 for r in results if r.is_valid_feed)
+    recent = sum(1 for r in results if r.has_recent_content)
+
+    print(f'\n{"=" * 72}')
+    print(f'RSS VALIDATION — {datetime.now().strftime("%Y-%m-%d %H:%M")}')
+    print(f'{"=" * 72}')
+    print(f'Total: {total}  Accessible: {accessible}  Valid: {valid}  Recent: {recent}')
+
+    accessible_results = [r for r in results if r.is_accessible]
+    if accessible_results:
+        times = [r.response_time for r in accessible_results]
+        print(f'Response time: avg {sum(times)/len(times):.1f}s  '
+              f'min {min(times):.1f}s  max {max(times):.1f}s')
+
+    by_country: dict = {}
+    for r in results:
+        s = by_country.setdefault(r.feed_info.country, {'total': 0, 'valid': 0})
+        s['total'] += 1
+        if r.is_valid_feed:
+            s['valid'] += 1
+
+    print('\nCountry breakdown:')
+    for c, s in sorted(by_country.items()):
+        pct = s['valid'] / s['total'] * 100
+        print(f'  {c}: {s["valid"]}/{s["total"]} ({pct:.0f}%)')
+
+    failed = [r for r in results if not r.is_valid_feed or not r.has_recent_content]
+    if failed:
+        print(f'\nProblematic feeds ({len(failed)}):')
+        for r in failed:
+            issues = []
+            if not r.is_accessible:
+                issues.append('unreachable')
+            elif not r.is_valid_feed:
+                issues.append('invalid feed')
+            elif not r.has_recent_content:
+                date_str = r.latest_entry_date.strftime('%Y-%m-%d') if r.latest_entry_date else 'no date'
+                issues.append(f'stale ({date_str})')
+            print(f'  ✗ {r.feed_info.name} ({r.feed_info.country}) — {", ".join(issues)}')
+            if r.error_message:
+                print(f'      {r.error_message}')
+
+
+def save_reports(results: list, output_dir: str) -> None:
+    ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    csv_path = os.path.join(output_dir, f'rss_validation_{ts}.csv')
+    json_path = os.path.join(output_dir, f'rss_validation_{ts}.json')
+
+    fields = ['name', 'url', 'country', 'language', 'category', 'is_accessible',
+              'response_code', 'response_time', 'is_valid_feed', 'has_recent_content',
+              'entry_count', 'latest_entry_date', 'error_message', 'feed_title']
+    with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        for r in results:
+            w.writerow({
+                'name': r.feed_info.name, 'url': r.feed_info.url,
+                'country': r.feed_info.country, 'language': r.feed_info.language,
+                'category': r.feed_info.category,
+                'is_accessible': r.is_accessible, 'response_code': r.response_code,
+                'response_time': f'{r.response_time:.2f}', 'is_valid_feed': r.is_valid_feed,
+                'has_recent_content': r.has_recent_content, 'entry_count': r.entry_count,
+                'latest_entry_date': r.latest_entry_date.isoformat() if r.latest_entry_date else '',
+                'error_message': r.error_message or '', 'feed_title': r.feed_title or '',
+            })
+
+    json_results = []
+    for r in results:
+        d = asdict(r)
+        if d.get('latest_entry_date'):
+            d['latest_entry_date'] = r.latest_entry_date.isoformat()
+        json_results.append(d)
+
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump({
+            'timestamp': ts,
+            'summary': {'total': len(results), 'valid': sum(1 for r in results if r.is_valid_feed),
+                        'recent': sum(1 for r in results if r.has_recent_content)},
+            'results': json_results,
+        }, f, indent=2, ensure_ascii=False)
+
+    print(f'\nReports saved:\n  CSV:  {csv_path}\n  JSON: {json_path}')
+
+
+def save_discovery_report(feeds: list, output_dir: str) -> str:
+    ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    path = os.path.join(output_dir, f'discovered_feeds_{ts}.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump({'timestamp': ts, 'total': len(feeds),
+                   'feeds': [asdict(fd) for fd in feeds]}, f, indent=2, ensure_ascii=False)
+    print(f'Discovery report: {path}')
+    return path
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
+def main() -> None:
     parser = argparse.ArgumentParser(description='RSS Feed Validator and Discovery Tool')
-    parser.add_argument('--file', '-f',
-                        help='Path to RssData.kt file',
-                        default='../app/src/main/java/secret/news/club/infrastructure/rss/RssData.kt')
+    parser.add_argument('--file', '-f', default=DEFAULT_KOTLIN_FILE,
+                        help='Path to RssData.kt')
     parser.add_argument('--workers', '-w', type=int, default=10,
-                        help='Number of parallel workers (default: 10)')
+                        help='Concurrent request limit (default: 10)')
     parser.add_argument('--timeout', '-t', type=int, default=15,
-                        help='Request timeout in seconds (default: 15)')
+                        help='Per-request timeout in seconds (default: 15)')
     parser.add_argument('--days', '-d', type=int, default=7,
-                        help='Days threshold for recent content (default: 7)')
-    parser.add_argument('--remove', choices=['strict', 'moderate', 'loose', 'old'],
-                        help='Remove problematic feeds (strict/moderate/loose/old)')
-    parser.add_argument('--sort-by-language', action='store_true',
-                        help='Sort feeds by native language')
-    parser.add_argument('--discover', '-D', nargs='+',
-                        help='Discover new feeds for countries (e.g., --discover US GB CA)')
+                        help='Recency threshold in days (default: 7)')
+    parser.add_argument('--remove', choices=['strict', 'moderate', 'loose'],
+                        help='Remove feeds: strict=unreachable+invalid+stale, '
+                             'moderate=unreachable+invalid, loose=unreachable only')
+    parser.add_argument('--discover', '-D', nargs='+', metavar='CC',
+                        help='Discover feeds for country codes (e.g. US GB CA)')
     parser.add_argument('--discover-all', action='store_true',
-                        help='Discover feeds for all supported countries')
-    parser.add_argument('--categories', nargs='+',
-                        default=['news', 'sports'],
-                        help='Categories to discover (default: news sports)')
+                        help='Discover for all countries in COUNTRIES dict')
+    parser.add_argument('--categories', nargs='+', default=['news', 'sports'],
+                        help='Discovery categories (default: news sports)')
     parser.add_argument('--no-progress', action='store_true',
-                        help='Disable progress output during validation')
+                        help='Suppress per-feed progress lines')
     parser.add_argument('--output-dir', '-o', default='.',
-                        help='Output directory for reports (default: current directory)')
+                        help='Directory for saved reports (default: current dir)')
     parser.add_argument('--generate-kotlin', action='store_true',
-                        help='Generate Kotlin code for discovered feeds')
+                        help='Write per-country Kotlin snippets to output-dir/kotlin_feeds/')
     parser.add_argument('--add-to-file', action='store_true',
-                        help='Automatically add discovered feeds to Kotlin file')
+                        help='Insert discovered feeds directly into RssData.kt')
     parser.add_argument('--input-file', '-i',
-                        help='Path to a JSON file with discovered feeds to add')
-
+                        help='JSON discovery report to add (skips network discovery)')
     args = parser.parse_args()
 
-    # Construct file path
-    script_dir = os.path.dirname(__file__)
-    file_path = os.path.join(script_dir, args.file)
+    file_path = os.path.abspath(args.file)
 
-    # Initialize validator and discovery
-    validator = RSSValidator(
-        max_workers=args.workers,
-        timeout=args.timeout,
-        days_threshold=args.days
+    # ── Discovery mode ────────────────────────────────────────────────────────
+    if args.discover or args.discover_all or args.input_file:
+        if args.input_file:
+            print(f'Loading feeds from {args.input_file}...')
+            with open(args.input_file, encoding='utf-8') as f:
+                data = json.load(f)
+            all_feeds = [FeedInfo(**fd) for fd in data['feeds']]
+        else:
+            countries = (list(COUNTRIES.keys()) if args.discover_all
+                         else [c.upper() for c in (args.discover or [])])
+            print(f'Discovering feeds for: {", ".join(countries)}')
+
+            async def run_discovery():
+                total = len(countries)
+                done = 0
+                all_feeds: list = []
+                tasks = {
+                    asyncio.ensure_future(
+                        discover_country(c, args.categories, args.timeout, args.workers)
+                    ): c
+                    for c in countries
+                }
+                for fut in asyncio.as_completed(tasks):
+                    feeds = await fut
+                    done += 1
+                    all_feeds.extend(feeds)
+                    print(f'\n>>> [{done}/{total} countries done] '
+                          f'total feeds so far: {len(all_feeds)}', flush=True)
+                return all_feeds
+
+            all_feeds = asyncio.run(run_discovery())
+
+        if not all_feeds:
+            print('No feeds discovered.')
+            return
+
+        by_country: dict = {}
+        for f in all_feeds:
+            by_country.setdefault(f.country, []).append(f)
+        print(f'\nDiscovered {len(all_feeds)} feeds total:')
+        for c, feeds in sorted(by_country.items()):
+            print(f'  {c}: {len(feeds)}')
+
+        save_discovery_report(all_feeds, args.output_dir)
+
+        if args.generate_kotlin:
+            kt_dir = os.path.join(args.output_dir, 'kotlin_feeds')
+            os.makedirs(kt_dir, exist_ok=True)
+            for country in {f.country for f in all_feeds}:
+                code = generate_kotlin_code(all_feeds, country)
+                kt_path = os.path.join(kt_dir, f'{country}_feeds.kt')
+                with open(kt_path, 'w', encoding='utf-8') as f:
+                    f.write(code)
+                print(f'  Kotlin snippet: {kt_path}')
+
+        if args.add_to_file:
+            if os.path.exists(file_path):
+                add_feeds_to_kotlin(file_path, all_feeds)
+            else:
+                print(f'Warning: {file_path} not found, skipping --add-to-file')
+        return
+
+    # ── Validation mode ───────────────────────────────────────────────────────
+    if not os.path.exists(file_path):
+        print(f'Error: {file_path} not found')
+        return
+
+    feeds = read_feeds_from_kotlin(file_path)
+    if not feeds:
+        print('No RssService entries found in file.')
+        return
+
+    print(f'Validating {len(feeds)} feeds ({args.workers} workers, {args.timeout}s timeout)...\n')
+    results = asyncio.run(
+        validate_all(feeds, args.workers, args.timeout, args.days,
+                     show_progress=not args.no_progress)
     )
 
-    discovery = FeedDiscovery(timeout=args.timeout)
+    print_validation_report(results)
+    save_reports(results, args.output_dir)
 
-    # Handle feed discovery
-    if args.discover or args.discover_all or args.input_file:
-        all_discovered_feeds = []
-
-        if args.input_file:
-            print(f"Reading discovered feeds from {args.input_file}...")
-            with open(args.input_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                for feed_data in data['feeds']:
-                    # Convert latest_entry_date back to datetime object
-                    if feed_data.get('latest_entry_date'):
-                        feed_data['latest_entry_date'] = datetime.fromisoformat(feed_data['latest_entry_date'])
-                    all_discovered_feeds.append(DiscoveredFeed(**feed_data))
-        else:
-            countries_to_discover = []
-
-            if args.discover_all:
-                countries_to_discover = ['US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IN', 'BR', 'JP', 'ES', 'IT']
-            elif args.discover:
-                countries_to_discover = [c.upper() for c in args.discover]
-
-            for country in countries_to_discover:
-                print(f"\n🌍 Discovering feeds for {country}...")
-                discovered_feeds = discovery.discover_feeds_for_country(country, args.categories)
-                all_discovered_feeds.extend(discovered_feeds)
-
-                if discovered_feeds:
-                    print(f"✅ Found {len(discovered_feeds)} feeds for {country}")
-                else:
-                    print(f"❌ No feeds found for {country}")
-
-            # Generate discovery report
-            discovery_report = DiscoveryReportGenerator(all_discovered_feeds)
-            discovery_report.generate_console_report()
-
-            # Save discovery report
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            discovery_file = os.path.join(args.output_dir, f"discovered_feeds_{timestamp}.json")
-            discovery_report.save_discovery_report(discovery_file)
-            print(f"\n📁 Discovery report saved: {discovery_file}")
-
-        # Generate Kotlin code if requested
-        if args.generate_kotlin and all_discovered_feeds:
-            kotlin_dir = os.path.join(args.output_dir, "kotlin_feeds")
-            os.makedirs(kotlin_dir, exist_ok=True)
-
-            countries_in_feeds = set(feed.country for feed in all_discovered_feeds)
-            for country in countries_in_feeds:
-                kotlin_code = DiscoveryReportGenerator(all_discovered_feeds).generate_kotlin_code(country)
-                kotlin_file = os.path.join(kotlin_dir, f"{country}_discovered_feeds.kt")
-
-                with open(kotlin_file, 'w', encoding='utf-8') as f:
-                    f.write(kotlin_code)
-
-                print(f"📝 Kotlin code generated: {kotlin_file}")
-
-        # Add feeds to Kotlin file if requested
-        if args.add_to_file and all_discovered_feeds and os.path.exists(file_path):
-            updater = KotlinFileUpdater(file_path)
-            updater.add_discovered_feeds_to_file(all_discovered_feeds)
-
-        return
-
-    # Original validation functionality
-    if not os.path.exists(file_path):
-        print(f"Error: File not found at {file_path}")
-        return
-
-    # Extract and validate existing feeds
-    print(f"Extracting feeds from {file_path}...")
-    feeds = validator.get_feeds_from_file(file_path)
-
-    if not feeds:
-        print("No feeds found to validate.")
-        return
-
-    print(f"Found {len(feeds)} RSS feeds to validate.")
-    print(f"Using {args.workers} workers with {args.timeout}s timeout.")
-    print(f"Content recency threshold: {args.days} days.")
-    print()
-
-    # Validate feeds
-    results = validator.validate_feeds_parallel(feeds, show_progress=not args.no_progress)
-
-    # Generate reports
-    report_gen = ReportGenerator(results)
-    report_gen.generate_console_report()
-
-    # Save detailed reports
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv_file = os.path.join(args.output_dir, f"rss_validation_{timestamp}.csv")
-    json_file = os.path.join(args.output_dir, f"rss_validation_{timestamp}.json")
-
-    report_gen.save_csv_report(csv_file)
-    report_gen.save_json_report(json_file)
-
-    print(f"\nDetailed reports saved:")
-    print(f"  CSV: {csv_file}")
-    print(f"  JSON: {json_file}")
-
-    # Remove problematic feeds if requested
     if args.remove:
-        updater = KotlinFileUpdater(file_path)
-        updater.remove_problematic_feeds(results, args.remove, args.days)
+        criteria = args.remove
+        to_remove = []
+        for r in results:
+            if criteria == 'strict' and (not r.is_accessible or not r.is_valid_feed or not r.has_recent_content):
+                to_remove.append(r.feed_info.url)
+            elif criteria == 'moderate' and (not r.is_accessible or not r.is_valid_feed):
+                to_remove.append(r.feed_info.url)
+            elif criteria == 'loose' and not r.is_accessible:
+                to_remove.append(r.feed_info.url)
 
-    # Sort feeds by native language if requested
-    if args.sort_by_language:
-        print("\nSorting feeds by native language...")
-        updater = KotlinFileUpdater(file_path)
-        updater.sort_feeds_by_language(feeds, validator)
+        if to_remove:
+            print(f'\nRemoving {len(to_remove)} feeds ({criteria})...')
+            remove_feeds_from_kotlin(file_path, to_remove)
+        else:
+            print(f'\nNo feeds to remove under "{criteria}" criteria.')
 
-if __name__ == "__main__":
-    main()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

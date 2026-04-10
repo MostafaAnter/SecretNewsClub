@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import android.app.Activity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -88,6 +89,7 @@ import secret.news.club.infrastructure.preference.PullToLoadNextFeedPreference
 import secret.news.club.infrastructure.preference.SortUnreadArticlesPreference
 import secret.news.club.ui.component.FilterBar
 import secret.news.club.ui.component.base.AdBanner
+import secret.news.club.ui.component.base.InterstitialAdManager
 import secret.news.club.ui.component.base.FeedbackIconButton
 import secret.news.club.ui.component.base.RYExtensibleVisibility
 import secret.news.club.ui.component.base.RYScaffold
@@ -128,6 +130,8 @@ fun FlowPage(
     val sharedContent = LocalSharedContent.current
     val markAsReadOnScroll = LocalMarkAsReadOnScroll.current.value
     val context = LocalContext.current
+    val interstitialAdManager = remember { InterstitialAdManager(context) }
+    LaunchedEffect(Unit) { interstitialAdManager.loadAd() }
 
     val openLink = LocalOpenLink.current
     val openLinkSpecificBrowser = LocalOpenLinkSpecificBrowser.current
@@ -624,11 +628,16 @@ fun FlowPage(
                                             openLinkSpecificBrowser,
                                         )
                                     } else {
-                                        navController.navigate(
-                                            "${RouteName.READING}/${articleWithFeed.article.id}"
-                                        ) {
-                                            launchSingleTop = true
-                                        }
+                                        interstitialAdManager.showIfReady(
+                                            activity = context as Activity,
+                                            onComplete = {
+                                                navController.navigate(
+                                                    "${RouteName.READING}/${articleWithFeed.article.id}"
+                                                ) {
+                                                    launchSingleTop = true
+                                                }
+                                            }
+                                        )
                                     }
                                 },
                                 onToggleStarred = onToggleStarred,

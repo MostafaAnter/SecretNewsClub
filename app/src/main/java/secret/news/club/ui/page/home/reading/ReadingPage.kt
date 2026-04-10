@@ -52,7 +52,6 @@ import secret.news.club.infrastructure.preference.LocalReadingBoldCharacters
 import secret.news.club.infrastructure.preference.LocalReadingTextLineHeight
 import secret.news.club.infrastructure.preference.not
 import secret.news.club.ui.ext.collectAsStateValue
-import secret.news.club.ui.ext.extractDomain
 import secret.news.club.ui.ext.extractHost
 import secret.news.club.ui.ext.showToast
 import secret.news.club.ui.page.home.reading.tts.TtsButton
