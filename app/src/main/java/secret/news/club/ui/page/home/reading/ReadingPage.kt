@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.app.Activity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
@@ -45,6 +46,7 @@ import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import secret.news.club.R
 import secret.news.club.ui.component.base.AdBanner
+import secret.news.club.ui.component.base.InterstitialAdManager
 import secret.news.club.infrastructure.android.TextToSpeechManager
 import secret.news.club.infrastructure.preference.LocalPullToSwitchArticle
 import secret.news.club.infrastructure.preference.LocalReadingAutoHideToolbar
@@ -67,6 +69,7 @@ private const val DOWNWARD = -1
 fun ReadingPage(
     navController: NavHostController,
     readingViewModel: ReadingViewModel,
+    interstitialAdManager: InterstitialAdManager,
 ) {
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
@@ -172,10 +175,20 @@ fun ReadingPage(
                                 rememberPullToLoadState(
                                     key = content,
                                     onLoadNext = if (isNextArticleAvailable) {
-                                        { readingViewModel.loadNext() }
+                                        {
+                                            interstitialAdManager.showIfReady(
+                                                activity = context as Activity,
+                                                onComplete = { readingViewModel.loadNext() }
+                                            )
+                                        }
                                     } else null,
                                     onLoadPrevious = if (isPreviousArticleAvailable) {
-                                        { readingViewModel.loadPrevious() }
+                                        {
+                                            interstitialAdManager.showIfReady(
+                                                activity = context as Activity,
+                                                onComplete = { readingViewModel.loadPrevious() }
+                                            )
+                                        }
                                     } else null
                                 )
 
@@ -265,7 +278,10 @@ fun ReadingPage(
                             readingViewModel.updateStarredStatus(it)
                         },
                         onNextArticle = {
-                            readingViewModel.loadNext()
+                            interstitialAdManager.showIfReady(
+                                activity = context as Activity,
+                                onComplete = { readingViewModel.loadNext() }
+                            )
                         },
                         onFullContent = {
                             if (it) readingViewModel.renderFullContent()

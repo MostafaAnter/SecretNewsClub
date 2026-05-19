@@ -116,6 +116,7 @@ fun FlowPage(
     navController: NavHostController,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    interstitialAdManager: InterstitialAdManager,
     flowViewModel: FlowViewModel = hiltViewModel(),
     homeViewModel: HomeViewModel,
 ) {
@@ -130,8 +131,6 @@ fun FlowPage(
     val sharedContent = LocalSharedContent.current
     val markAsReadOnScroll = LocalMarkAsReadOnScroll.current.value
     val context = LocalContext.current
-    val interstitialAdManager = remember { InterstitialAdManager(context) }
-    LaunchedEffect(Unit) { interstitialAdManager.loadAd() }
 
     val openLink = LocalOpenLink.current
     val openLinkSpecificBrowser = LocalOpenLinkSpecificBrowser.current

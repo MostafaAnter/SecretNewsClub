@@ -50,6 +50,7 @@ import secret.news.club.ui.page.settings.tips.LicenseListPage
 import secret.news.club.ui.page.settings.tips.TipsAndSupportPage
 import secret.news.club.ui.page.settings.contact.ContactUsPage
 import secret.news.club.ui.page.settings.troubleshooting.TroubleshootingPage
+import secret.news.club.ui.component.base.InterstitialAdManager
 import secret.news.club.ui.page.startup.StartupPage
 import secret.news.club.ui.theme.AppTheme
 
@@ -62,7 +63,8 @@ fun HomeEntry(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-
+    val interstitialAdManager = remember { InterstitialAdManager(context) }
+    LaunchedEffect(Unit) { interstitialAdManager.loadAd() }
 
     val settings = LocalSettings.current
     val isFirstLaunch = remember { context.isFirstLaunch }
@@ -124,6 +126,7 @@ fun HomeEntry(
                         navController = navController,
                         homeViewModel = homeViewModel,
                         flowViewModel = flowViewModel,
+                        interstitialAdManager = interstitialAdManager,
                         sharedTransitionScope = this@SharedTransitionScope,
                         animatedVisibilityScope = this,
                     )
@@ -140,7 +143,8 @@ fun HomeEntry(
 
                     ReadingPage(
                         navController = navController,
-                        readingViewModel = readingViewModel
+                        readingViewModel = readingViewModel,
+                        interstitialAdManager = interstitialAdManager,
                     )
                 }
 
