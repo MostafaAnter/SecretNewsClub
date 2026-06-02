@@ -35,7 +35,8 @@ data class Feed(
     val isFullContent: Boolean = false,
     @ColumnInfo(defaultValue = "0")
     val isBrowser: Boolean = false,
-    @Ignore val important: Int = 0
+    @Ignore val important: Int = 0,
+    @Ignore val language: String = "",
 ) {
     constructor(
         id: String,

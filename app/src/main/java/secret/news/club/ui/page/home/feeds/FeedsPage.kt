@@ -86,6 +86,7 @@ import secret.news.club.ui.ext.findActivity
 import secret.news.club.ui.ext.getCurrentVersion
 import secret.news.club.ui.ext.surfaceColorAtElevation
 import secret.news.club.ui.page.common.RouteName
+import secret.news.club.infrastructure.rss.NativeLanguageKeywords
 import secret.news.club.ui.page.home.feeds.accounts.AccountsTab
 import secret.news.club.ui.page.home.feeds.drawer.feed.FeedOptionDrawer
 import secret.news.club.ui.page.home.feeds.drawer.group.GroupOptionDrawer
@@ -124,6 +125,22 @@ fun FeedsPage(
     val filterState = feedsViewModel.filterStateFlow.collectAsStateValue()
     val importantSum = feedsUiState.importantSum
     val groupWithFeedList = feedsViewModel.groupWithFeedsListFlow.collectAsStateValue()
+    val countryPref = LocalCountry.current
+    val nativeLang = remember(countryPref) {
+        countryPref?.value?.let { NativeLanguageKeywords.languageForCountry(it) } ?: ""
+    }
+    val sortedGroupWithFeedList = remember(groupWithFeedList, nativeLang) {
+        if (nativeLang.isEmpty()) groupWithFeedList
+        else groupWithFeedList.map { gwf ->
+            gwf.copy(
+                feeds = gwf.feeds
+                    .sortedByDescending { feed ->
+                        feed.name.hasNativeScript(nativeLang) || feed.language == nativeLang
+                    }
+                    .toMutableList()
+            )
+        }
+    }
     val groupsVisible: SnapshotStateMap<String, Boolean> = feedsUiState.groupsVisible
     val hasGroupVisible by remember(groupWithFeedList) { derivedStateOf { groupWithFeedList.fastAny { groupsVisible[it.group.id] == true } } }
 
@@ -319,7 +336,7 @@ fun FeedsPage(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    itemsIndexed(groupWithFeedList) { _, (group, feeds) ->
+                    itemsIndexed(sortedGroupWithFeedList) { _, (group, feeds) ->
 
                         GroupWithFeedsContainer {
                             GroupItem(isExpanded = {
@@ -450,4 +467,27 @@ private fun filterChange(
             launchSingleTop = true
         }
     }
+}
+
+/**
+ * Returns true if this string contains characters belonging to the native script of [language].
+ * Used to sort feeds whose names are written in the user's native script to the top of the list.
+ * Falls back to the Feed.language DB field for Latin-script languages (where script detection
+ * cannot distinguish between languages).
+ */
+private fun String.hasNativeScript(language: String): Boolean = when (language) {
+    "ar", "fa", "ur" -> any { it.code in 0x0600..0x06FF }       // Arabic / Farsi / Urdu
+    "zh"             -> any { it.code in 0x4E00..0x9FFF }        // CJK Unified Ideographs
+    "ja"             -> any { it.code in 0x3040..0x30FF          // Hiragana + Katakana
+                              || it.code in 0x4E00..0x9FFF }     // or Kanji
+    "ko"             -> any { it.code in 0xAC00..0xD7AF }        // Hangul syllables
+    "ru", "uk", "bg" -> any { it.code in 0x0400..0x04FF }        // Cyrillic
+    "he"             -> any { it.code in 0x0590..0x05FF }        // Hebrew
+    "hi", "mr", "ne" -> any { it.code in 0x0900..0x097F }        // Devanagari
+    "th"             -> any { it.code in 0x0E00..0x0E7F }        // Thai
+    "el"             -> any { it.code in 0x0370..0x03FF }        // Greek
+    "am", "ti"       -> any { it.code in 0x1200..0x137F }        // Ethiopic
+    "ka"             -> any { it.code in 0x10A0..0x10FF }        // Georgian
+    "hy"             -> any { it.code in 0x0530..0x058F }        // Armenian
+    else             -> false  // Latin-script: use feed.language DB field instead
 }
