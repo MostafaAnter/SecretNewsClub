@@ -73,6 +73,8 @@
     <string name="other">Прочее</string>
     <string name="all_allow_notification_tips">Разрешить всем лентам в группе \"%1$s\" отправлять уведомления</string>
     <string name="all_deny_notification_toast">Уведомления из группы \"%1$s\" заблокированы</string>
+    <string name="auto_notify_top_feed">Авто-уведомления для главной ленты</string>
+    <string name="auto_notify_top_feed_desc">Автоматически подписываться на уведомления главной ленты для выбранной страны</string>
     <string name="all_allow_notification_toast">Уведомления от группы \"%1$s\" разрешены</string>
     <string name="all_move_to_group_toast">Все ленты перемещены в группу \"%1$s\"</string>
     <string name="rename_toast">Переименовано в \"%1$s\"</string>

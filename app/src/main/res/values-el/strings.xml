@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="all">Όλα</string>
+    <string name="auto_notify_top_feed">Αυτόματη ειδοποίηση κορυφαίας ροής</string>
+    <string name="auto_notify_top_feed_desc">Αυτόματη εγγραφή σε ειδοποιήσεις από την κορυφαία ροή για την επιλεγμένη χώρα</string>
 </resources>

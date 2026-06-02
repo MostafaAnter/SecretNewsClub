@@ -47,6 +47,8 @@
     <string name="all_allow_notification_tips">Povolit zasílání oznámení všem kanálům ve skupině \"%1$s\"</string>
     <string name="all_allow_notification_toast">Oznámení ze skupiny \"%1$s\" jsou povolena</string>
     <string name="all_deny_notification_toast">Oznámení ze skupiny \"%1$s\" jsou blokována</string>
+    <string name="auto_notify_top_feed">Automatická oznámení z hlavního kanálu</string>
+    <string name="auto_notify_top_feed_desc">Automaticky se přihlásit k odběru oznámení z hlavního kanálu pro vybranou zemi</string>
     <string name="parse_full_content">Načíst celý obsah</string>
     <string name="all_parse_full_content_tips">Načítání celého obsahu všech článků ve skupině \"%1$s\"</string>
     <string name="all_parse_full_content_toast">Načítání celého obsahu všech článků ve skupině \"%1$s\" je povoleno</string>

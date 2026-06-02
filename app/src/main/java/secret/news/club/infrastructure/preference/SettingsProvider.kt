@@ -142,6 +142,9 @@ class SettingsProvider @Inject constructor(
             // Languages
             LocalLanguages provides settings.languages,
             LocalCountry provides settings.country,
+
+            // Notifications
+            LocalAutoNotifyTopFeed provides settings.autoNotifyTopFeed,
         ) {
             content()
         }

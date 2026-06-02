@@ -47,6 +47,8 @@
     <string name="all_allow_notification_tips">Sta alle feeds in groep \"%1$s\" toe om notificaties te versturen/</string>
     <string name="all_allow_notification_toast">Alle notificaties van groep \"%1$s\" zijn toegestaan</string>
     <string name="all_deny_notification_toast">Alle notificaties van de groep \"%1$s\" worden geweigerd</string>
+    <string name="auto_notify_top_feed">Topfeed automatisch melden</string>
+    <string name="auto_notify_top_feed_desc">Automatisch abonneren op notificaties van de topfeed voor het gekozen land</string>
     <string name="feeds">Feeds</string>
     <string name="parse_full_content">Volledige inhoud parseren</string>
     <string name="all_parse_full_content_toast">Volledige inhoud parseren van alle artikelen in de groep \"%1$s\"</string>

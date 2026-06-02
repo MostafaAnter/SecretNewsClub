@@ -31,6 +31,8 @@
     <string name="preset">Nastavitev</string>
     <string name="selected">Izbrano</string>
     <string name="all_deny_notification_toast">Vsa obvestila iz skupine \"%1$s\" so zavrnjena</string>
+    <string name="auto_notify_top_feed">Samodejno obveščanje glavnega vira</string>
+    <string name="auto_notify_top_feed_desc">Samodejno se naročite na obvestila glavnega vira za izbrano državo</string>
     <string name="parse_full_content">Pridobi celotno vsebino</string>
     <string name="all_parse_full_content_tips">Pridobivanje celotne vsebine vseh novic v skupini \"%1$s\"</string>
     <string name="all_parse_full_content_toast">Pridobivanje celotne vsebine vseh novic v skupini \"%1$s\"</string>

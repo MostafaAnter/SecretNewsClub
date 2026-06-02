@@ -173,6 +173,8 @@
     <string name="all_allow_notification_tips">به همه حوراک‌های گروه %1$s اجازه دهید اعلان ارسال کنند</string>
     <string name="all_allow_notification_toast">همه اعلان‌ها از گروه %1$s مجاز هستند</string>
     <string name="all_deny_notification_toast">همه اعلان‌های گروه %1$s غیر مجاز هستند</string>
+    <string name="auto_notify_top_feed">اعلان خودکار خوراک برتر</string>
+    <string name="auto_notify_top_feed_desc">به‌طور خودکار در اعلان‌های خوراک برتر کشور انتخابی مشترک شوید</string>
     <string name="clear_articles">پاک کردن مقالات</string>
     <string name="clear_articles_in_feed_toast">تمام مقالات آرشیو شده در فید %1$s پاک شدند</string>
     <string name="clear_articles_in_group_toast">تمام مقالات بایگانی شده در گروه %1$s پاک شدند</string>

@@ -37,6 +37,8 @@
     <string name="all_allow_notification_tips">Értesítések küldésének engedélyezése a(z) „%1$s” csoportban lévő összes hírforrás számára</string>
     <string name="all_allow_notification_toast">Értesítések engedélyezve a(z) „%1$s” csoporttól</string>
     <string name="all_deny_notification_toast">Értesítések megtagadva a(z) „%1$s” csoporttól</string>
+    <string name="auto_notify_top_feed">Automatikus értesítés a vezető hírforrásról</string>
+    <string name="auto_notify_top_feed_desc">Automatikus feliratkozás a kiválasztott ország vezető hírforrásának értesítéseire</string>
     <string name="parse_full_content">Teljes tartalom feldolgozása</string>
     <string name="all_parse_full_content_tips">A(z) „%1$s” csoportban lévő összes cikk teljes tartalmának feldolgozása</string>
     <string name="all_parse_full_content_toast">A(z) „%1$s” csoportban lévő összes cikk teljes tartalmának feldolgozása engedélyezve</string>

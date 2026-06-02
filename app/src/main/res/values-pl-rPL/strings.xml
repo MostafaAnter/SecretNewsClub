@@ -50,6 +50,8 @@
     <string name="all_allow_notification_tips">Zezwól wszystkim kanałom w grupie „%1$s” na wysyłanie powiadomień</string>
     <string name="all_allow_notification_toast">Powiadomienia z grupy „%1$s” są dozwolone</string>
     <string name="all_deny_notification_toast">Powiadomienia z grupy „%1$s” są niedozwolone</string>
+    <string name="auto_notify_top_feed">Auto-powiadomienia z głównego kanału</string>
+    <string name="auto_notify_top_feed_desc">Automatycznie subskrybuj powiadomienia z głównego kanału dla wybranego kraju</string>
     <string name="parse_full_content">Pobierz artykuły</string>
     <string name="all_parse_full_content_tips">Pobieranie pełnej treści artykułów z grupy „%1$s”</string>
     <string name="all_parse_full_content_toast">Pełne analizowanie zawartości wszystkich artykułów w grupie „%1$s” jest dozwolone</string>

@@ -199,6 +199,8 @@
     <string name="system_default">מערכת</string>
     <string name="open_link_ask_dialog_title">פתיחה עם…</string>
     <string name="all_deny_notification_toast">כל ההתראות מהקבוצה „%1$s” נדחות</string>
+    <string name="auto_notify_top_feed">התראה אוטומטית לערוץ המוביל</string>
+    <string name="auto_notify_top_feed_desc">הירשם אוטומטית להתראות מהערוץ המוביל עבור המדינה שנבחרה</string>
     <string name="all_allow_notification_tips">לאפשר לכל ההזנות בקבוצה „%1$s” לשלוח התראות</string>
     <string name="all_parse_full_content_tips">ניתוח תוכן מלא של כל המאמרים בקבוצה „%1$s”</string>
     <string name="all_allow_notification_toast">כל ההתראות מהקבוצה „%1$s” מורשות</string>

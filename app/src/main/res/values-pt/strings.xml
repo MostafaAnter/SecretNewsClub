@@ -22,6 +22,8 @@
     <string name="preset">Predefinição</string>
     <string name="allow_notification">Permitir notificação</string>
     <string name="all_deny_notification_toast">Notificações do grupo \"%1$s\" são negadas</string>
+    <string name="auto_notify_top_feed">Notificação automática do feed principal</string>
+    <string name="auto_notify_top_feed_desc">Subscrever automaticamente as notificações do feed principal do país selecionado</string>
     <string name="all_allow_notification_toast">Notificações do grupo \"%1$s\" são permitidas</string>
     <string name="parse_full_content">Mostrar conteúdo completo</string>
     <string name="clear_articles">Limpar artigos</string>

@@ -44,6 +44,8 @@
     <string name="all_allow_notification_tips">\"%1$s\" समूह के सभी फीड को सूचनाएं भेजने की अनुमति दें</string>
     <string name="all_allow_notification_toast">\"%1$s\" समूह की सभी सूचनाएं स्वीकृत है</string>
     <string name="all_deny_notification_toast">\"%1$s\" समूह की सभी सूचनाएं अस्वीकृत है</string>
+    <string name="auto_notify_top_feed">शीर्ष फ़ीड स्वतः सूचित करें</string>
+    <string name="auto_notify_top_feed_desc">चयनित देश के शीर्ष फ़ीड से सूचनाओं की स्वतः सदस्यता लें</string>
     <string name="parse_full_content">सम्पूर्ण लेख दिखाएं</string>
     <string name="all_parse_full_content_tips">\"%1$s\" समूह के सभी लेखों की पूर्ण सामग्री की पदव्याख्या की जा रही है</string>
     <string name="all_parse_full_content_toast">\"%1$s\" समूह के सभी लेखों की पूर्ण सामग्री की पदव्याख्या की जा रही है</string>

@@ -26,6 +26,7 @@ import secret.news.club.infrastructure.preference.InitialFilterPreference
 import secret.news.club.infrastructure.preference.InitialPagePreference
 import secret.news.club.infrastructure.preference.LocalArticleListSwipeEndAction
 import secret.news.club.infrastructure.preference.LocalArticleListSwipeStartAction
+import secret.news.club.infrastructure.preference.LocalAutoNotifyTopFeed
 import secret.news.club.infrastructure.preference.LocalHideEmptyGroups
 import secret.news.club.infrastructure.preference.LocalInitialFilter
 import secret.news.club.infrastructure.preference.LocalInitialPage
@@ -64,6 +65,7 @@ fun InteractionPage(
     val swipeToEndAction = LocalArticleListSwipeEndAction.current
     val markAsReadOnScroll = LocalMarkAsReadOnScroll.current
     val hideEmptyGroups = LocalHideEmptyGroups.current
+    val autoNotifyTopFeed = LocalAutoNotifyTopFeed.current
     val sortUnreadArticles = LocalSortUnreadArticles.current
     val pullToSwitchArticle = LocalPullToSwitchArticle.current
     val openLink = LocalOpenLink.current
@@ -136,6 +138,17 @@ fun InteractionPage(
                     ) {
                         RYSwitch(activated = hideEmptyGroups.value) {
                             hideEmptyGroups.toggle(context, scope)
+                        }
+                    }
+                    SettingItem(
+                        title = stringResource(R.string.auto_notify_top_feed),
+                        desc = stringResource(R.string.auto_notify_top_feed_desc),
+                        onClick = {
+                            autoNotifyTopFeed.toggle(context, scope)
+                        },
+                    ) {
+                        RYSwitch(activated = autoNotifyTopFeed.value) {
+                            autoNotifyTopFeed.toggle(context, scope)
                         }
                     }
                     Spacer(modifier = Modifier.height(24.dp))

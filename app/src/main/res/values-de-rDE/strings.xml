@@ -44,6 +44,8 @@
     <string name="all_allow_notification_tips">Erlaube allen Feeds in der Gruppe „%1$s“ Benachrichtigungen zu senden</string>
     <string name="all_allow_notification_toast">Benachrichtigungen der Gruppe „%1$s“ sind erlaubt</string>
     <string name="all_deny_notification_toast">Benachrichtigungen der Gruppe „%1$s“ werden verweigert</string>
+    <string name="auto_notify_top_feed">Top-Feed automatisch benachrichtigen</string>
+    <string name="auto_notify_top_feed_desc">Benachrichtigungen vom Top-Feed des ausgewählten Landes automatisch abonnieren</string>
     <string name="parse_full_content">Gesamtinhalt abrufen</string>
     <string name="all_parse_full_content_tips">Gesamten Inhalt aller Artikel der Gruppe „%1$s“ abrufen</string>
     <string name="all_parse_full_content_toast">Vollständiges Parsen des Inhalts aller Artikel in der Gruppe „%1$s“ ist erlaubt</string>

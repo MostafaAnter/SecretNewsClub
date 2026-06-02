@@ -95,6 +95,8 @@
     <string name="off">Dezactivat</string>
     <string name="value">valoare</string>
     <string name="all_deny_notification_toast">Toate notificările de la grupul „%1$s” sunt respinse</string>
+    <string name="auto_notify_top_feed">Notificare automată pentru fluxul principal</string>
+    <string name="auto_notify_top_feed_desc">Abonează-te automat la notificările fluxului principal pentru țara selectată</string>
     <string name="get_new_updates_desc">Noua versiune %1$s este disponibilă</string>
     <string name="help">Ajutor</string>
     <string name="advanced">Avansat</string>

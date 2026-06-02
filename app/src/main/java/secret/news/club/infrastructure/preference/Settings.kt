@@ -84,6 +84,9 @@ data class Settings(
     // Languages
     val languages: LanguagesPreference = LanguagesPreference.default,
     val country: CountryPreference? = null,
+
+    // Notifications
+    val autoNotifyTopFeed: AutoNotifyTopFeedPreference = AutoNotifyTopFeedPreference.default,
 ) {
     companion object {
         fun default(context: Context) = Settings(

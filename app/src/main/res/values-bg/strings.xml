@@ -57,6 +57,8 @@
     <string name="clear_articles_in_feed_toast">Изчистени са всички архивирани статии в емисията \"%1$s\"</string>
     <string name="parse_full_content">Пълнен разбор на съдържанието</string>
     <string name="all_deny_notification_toast">Известията от групата \"%1$s\" са отказани</string>
+    <string name="auto_notify_top_feed">Авто-известия за водещата емисия</string>
+    <string name="auto_notify_top_feed_desc">Автоматично се абонирай за известия от водещата емисия за избраната държава</string>
     <string name="all_parse_full_content_tips">Пълен разбор на съдържанието на всички статии в \"%1$s\" групата</string>
     <string name="all_deny_parse_full_content_toast">Пълен анализ на съдържанието на всички статии в групата \"%1$s\" е отказан</string>
     <string name="clear_articles">Ясни статии</string>

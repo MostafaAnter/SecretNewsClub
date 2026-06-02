@@ -33,6 +33,8 @@
     <string name="allow_notification">Tillåt avisering</string>
     <string name="all_allow_notification_tips">Tillåt alla flöden i gruppen \"%1$s\" att skicka aviseringar.</string>
     <string name="all_deny_notification_toast">Alla aviseringar från gruppen \"%1$s\" nekas</string>
+    <string name="auto_notify_top_feed">Notifiera toppflöde automatiskt</string>
+    <string name="auto_notify_top_feed_desc">Prenumerera automatiskt på aviseringar från toppflödet för det valda landet</string>
     <string name="parse_full_content">Analysera fullständigt innehåll</string>
     <string name="all_parse_full_content_tips">Fullständig innehållsanalys av samtliga artiklar i gruppen \"%1$s\".</string>
     <string name="all_parse_full_content_toast">Fullständig innehållsanalys av samtliga artiklar i gruppen \"%1$s\"</string>

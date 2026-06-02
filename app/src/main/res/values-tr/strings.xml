@@ -39,6 +39,8 @@
     <string name="all_allow_notification_toast">\"%1$s\" grubundan gelen tüm bildirimlere izin verilir</string>
     <string name="selected">Seçildi</string>
     <string name="all_deny_notification_toast">\"%1$s\" grubundan gelen tüm bildirimler reddedilir</string>
+    <string name="auto_notify_top_feed">Üst beslemeyi otomatik bildir</string>
+    <string name="auto_notify_top_feed_desc">Seçilen ülkenin üst beslemesinden bildirimlere otomatik olarak abone ol</string>
     <string name="parse_full_content">Tam içeriği ayrıştır</string>
     <string name="all_parse_full_content_tips">\"%1$s\" grubundaki tüm makalelerin tam içerik ayrıştırılması</string>
     <string name="all_parse_full_content_toast">\"%1$s\" grubundaki tüm makalelerin tam içerik ayrıştırması</string>

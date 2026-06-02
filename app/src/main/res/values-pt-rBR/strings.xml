@@ -45,6 +45,8 @@
     <string name="allow_notification">Permitir notificações</string>
     <string name="all_allow_notification_tips">Permitir que todos os feeds no grupo \"%1$s\" enviem notificações</string>
     <string name="all_deny_notification_toast">Todas as notificações do grupo \"%1$s\" foram negadas</string>
+    <string name="auto_notify_top_feed">Notificar automaticamente o feed principal</string>
+    <string name="auto_notify_top_feed_desc">Inscrever-se automaticamente nas notificações do feed principal do país selecionado</string>
     <string name="all_allow_notification_toast">Todas as notificações do grupo \"%1$s\" foram permitidas</string>
     <string name="parse_full_content">Visualizar conteúdo completo</string>
     <string name="clear_articles_in_feed_toast">Todos os artigos arquivados no feed \"%1$s\" foram removidos</string>

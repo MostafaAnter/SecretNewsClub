@@ -42,6 +42,8 @@
     <string name="all_allow_notification_tips">允许 \"%1$s\" 分组中的所有订阅源发出通知</string>
     <string name="all_allow_notification_toast">已允许来自 \"%1$s\" 分组的通知</string>
     <string name="all_deny_notification_toast">已拒绝来自 \"%1$s\" 分组的通知</string>
+    <string name="auto_notify_top_feed">自动通知热门订阅源</string>
+    <string name="auto_notify_top_feed_desc">自动订阅所选国家/地区热门订阅源的通知</string>
     <string name="parse_full_content">全文解析</string>
     <string name="all_parse_full_content_tips">对 \"%1$s\" 分组中的所有文章进行全文解析</string>
     <string name="all_parse_full_content_toast">已允许全文解析 \"%1$s\" 分组的所有文章</string>

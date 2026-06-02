@@ -30,6 +30,8 @@
     <string name="selected">معملها سَلَكت</string>
     <string name="allow_notification">قبال بال نوتيفيكايشنات</string>
     <string name="all_deny_notification_toast">كل النوتيفيكشنات من الگروپ «%1$s» مش مسموحة</string>
+    <string name="auto_notify_top_feed">نوتيفيكيشن أوتوماتيكي لأهم فيد</string>
+    <string name="auto_notify_top_feed_desc">اشترك أوتوماتيكي بإشعارات أهم فيد للبلد اللي اخترتها</string>
     <string name="all_allow_notification_toast">كل النوتيفيكشنات من الگروپ «%1$s» مسموحة</string>
     <string name="parse_full_content">جيب كل المحتوى</string>
     <string name="all_parse_full_content_tips">عم ينجاب المحتوى الكامل من مقلات الگروپ «%1$s»</string>

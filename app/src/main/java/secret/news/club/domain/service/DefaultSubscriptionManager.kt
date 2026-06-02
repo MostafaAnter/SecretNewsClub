@@ -57,16 +57,20 @@ class DefaultSubscriptionManager @Inject constructor(
             }
 
             val defaultFeeds = rssServiceManager.getRssServices(resolvedCountryCode)
-            val existingFeeds =
-                rssService.get().pullFeeds().first().flatMap { it.feeds }.map { it.url }.toSet()
 
             if (defaultFeeds.isEmpty()) {
                 _message.value = context.getString(R.string.no_feeds_for_country)
                 return@launch
             }
 
-            val groups = rssService.get().pullGroups().first()
-            val firstGroupId = groups.firstOrNull()?.id ?: rssService.get().addGroup(null, "Default")
+            // Use a one-shot suspend query instead of pullGroups()/pullFeeds().first().
+            // Those return Room Flows whose initial emission can be a stale cached snapshot
+            // taken before deleteAllFeeds() committed — which would hand us a non-existent
+            // groupId and crash the subsequent feedDao.insert with a FOREIGN KEY violation.
+            val groupsWithFeeds = rssService.get().queryAllGroupWithFeeds()
+            val existingFeeds = groupsWithFeeds.flatMap { it.feeds }.map { it.url }.toSet()
+            val firstGroupId = groupsWithFeeds.firstOrNull()?.group?.id
+                ?: rssService.get().addGroup(null, "Default")
 
             var newFeedsAdded = false
             defaultFeeds.forEachIndexed { index, feed ->

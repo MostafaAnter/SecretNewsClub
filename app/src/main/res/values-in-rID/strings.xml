@@ -41,6 +41,8 @@
     <string name="all_allow_notification_tips">Izinkan semua umpan di grup \"%1$s\" untuk mengirim notifikasi</string>
     <string name="all_allow_notification_toast">Mengizinkan semua notifikasi dari grup \"%1$s\"</string>
     <string name="all_deny_notification_toast">Menolak semua notifikasi dari grup \"%1$s\"</string>
+    <string name="auto_notify_top_feed">Notifikasi otomatis feed teratas</string>
+    <string name="auto_notify_top_feed_desc">Berlangganan notifikasi secara otomatis dari feed teratas untuk negara yang dipilih</string>
     <string name="parse_full_content">Uraikan keseluruhan isi konten</string>
     <string name="all_parse_full_content_tips">Uraikan keseluruhan isi konten dalam grup \"%1$s\"</string>
     <string name="all_parse_full_content_toast">Menguraikan keseluruhan isi konten dalam grup \"%1$s\"</string>

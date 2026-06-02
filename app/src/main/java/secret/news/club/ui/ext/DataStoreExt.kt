@@ -172,6 +172,8 @@ data class DataStoreKey<T>(
         const val sharedContent = "sharedContent"
         const val languages = "languages"
         const val country = "country"
+        const val autoNotifyTopFeed = "autoNotifyTopFeed"
+        const val autoSubscribedFeedId = "autoSubscribedFeedId"
 
         val keys: MutableMap<String, DataStoreKey<*>> = mutableMapOf(
             // Version
@@ -249,7 +251,9 @@ data class DataStoreKey<T>(
             sharedContent to DataStoreKey(intPreferencesKey(sharedContent), Int::class.java),
             // Languages
             languages to DataStoreKey(intPreferencesKey(languages), Int::class.java),
-            country to DataStoreKey(stringPreferencesKey(country), String::class.java)
+            country to DataStoreKey(stringPreferencesKey(country), String::class.java),
+            autoNotifyTopFeed to DataStoreKey(booleanPreferencesKey(autoNotifyTopFeed), Boolean::class.java),
+            autoSubscribedFeedId to DataStoreKey(stringPreferencesKey(autoSubscribedFeedId), String::class.java),
         )
     }
 }

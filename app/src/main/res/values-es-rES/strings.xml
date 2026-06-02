@@ -47,6 +47,8 @@
     <string name="all_allow_notification_tips">Permitir que todas las fuentes del grupo \"%1$s\" envíen notificaciones</string>
     <string name="all_allow_notification_toast">Todas las notificaciones del grupo \"%1$s\" están permitidas</string>
     <string name="all_deny_notification_toast">Todas las notificaciones del grupo \"%1$s\" están denegadas</string>
+    <string name="auto_notify_top_feed">Notificar automáticamente la fuente principal</string>
+    <string name="auto_notify_top_feed_desc">Suscribirse automáticamente a las notificaciones de la fuente principal del país seleccionado</string>
     <string name="parse_full_content">Analizar todo el contenido</string>
     <string name="all_parse_full_content_tips">Análisis del contenido completo de los artículos del grupo \"%1$s\"</string>
     <string name="all_parse_full_content_toast">Análisis de contenido completo de los artículos del grupo \"%1$s\"</string>

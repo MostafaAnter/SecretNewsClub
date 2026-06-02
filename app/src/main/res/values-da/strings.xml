@@ -49,6 +49,8 @@
     <string name="allow_notification">Tillad notifikationer</string>
     <string name="all_allow_notification_tips">Tillad alle feeds i \"%1$s\" gruppen at sende notifikationer</string>
     <string name="all_deny_notification_toast">Alle notifikationer fra \"%1$s\" gruppen er afvist</string>
+    <string name="auto_notify_top_feed">Auto-notificér topfeed</string>
+    <string name="auto_notify_top_feed_desc">Abonnér automatisk på notifikationer fra topfeedet for det valgte land</string>
     <string name="all_allow_notification_toast">Alle notifikationer fra \"%1$s\" gruppen er tilladt</string>
     <string name="parse_full_content">Fortolk hele indholdet</string>
     <string name="all_parse_full_content_tips">Fortolk hele indholdet af alle artikler i \"%1$s\" gruppen</string>

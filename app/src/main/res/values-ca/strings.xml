@@ -68,6 +68,8 @@
     <string name="all_allow_notification_tips">Permetre enviar notificacions a totes les fonts del grup \"%1$s\"</string>
     <string name="all_allow_notification_toast">Són permeses totes les notificacions del grup \"%1$s\"</string>
     <string name="all_deny_notification_toast">Són denegades totes les notificacions de grup \"%1$s\"</string>
+    <string name="auto_notify_top_feed">Notificació automàtica del canal principal</string>
+    <string name="auto_notify_top_feed_desc">Subscriviu-vos automàticament a les notificacions del canal principal del país seleccionat</string>
     <string name="all_deny_parse_full_content_toast">Aturar el processament del contingut de tots els articles del grup \"%1$s\"</string>
     <string name="clear_articles_in_group_toast">S\'han buidat tots els articles arxivats de la font \"%1$s\"</string>
     <string name="tos_tips">Si us plau llegeix i accepta els termes de servei i la política de privacitat de Secret News Club per continuar.</string>

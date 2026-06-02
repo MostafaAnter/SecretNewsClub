@@ -69,6 +69,8 @@
     <string name="allow_notification">السماح بالإشعارات</string>
     <string name="all_allow_notification_toast">يُسمح بكلِّ الإشعارات من مجموعة «%1$s»</string>
     <string name="all_deny_notification_toast">يُمنع إرسال أيِّ إشعار من مجموعة «%1$s»</string>
+    <string name="auto_notify_top_feed">تنبيه تلقائي لأهمّ خلاصة</string>
+    <string name="auto_notify_top_feed_desc">الاشتراك تلقائيًّا في إشعارات أهمِّ خلاصة للبلد الذي اخترته</string>
     <string name="parse_full_content">حلِّل كامل المحتوى</string>
     <string name="all_parse_full_content_toast">تحليل كامل المحتوى من جميع مقالات مجموعة «%1$s»</string>
     <string name="all">الكل</string>

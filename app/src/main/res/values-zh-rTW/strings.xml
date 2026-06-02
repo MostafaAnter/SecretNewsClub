@@ -41,6 +41,8 @@
     <string name="all_allow_notification_tips">允許「%1$s」群組中的所有來源傳送通知</string>
     <string name="all_allow_notification_toast">已全部允許來自「%1$s」群組的通知</string>
     <string name="all_deny_notification_toast">已全部拒絕來自「%1$s」群組的通知</string>
+    <string name="auto_notify_top_feed">自動通知熱門訂閱源</string>
+    <string name="auto_notify_top_feed_desc">自動訂閱所選國家／地區熱門訂閱源的通知</string>
     <string name="parse_full_content">全文解析</string>
     <string name="all_parse_full_content_tips">對「%1$s」群組中的所有文章進行全文解析</string>
     <string name="all_parse_full_content_toast">全文解析「%1$s」群組中的所有文章</string>

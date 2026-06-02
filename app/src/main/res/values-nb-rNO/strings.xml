@@ -93,6 +93,8 @@
     <string name="selected">Valgt</string>
     <string name="allow_notification">Tillat merknad</string>
     <string name="all_deny_notification_toast">Alle merknader fra «%1$s»-gruppen nektes</string>
+    <string name="auto_notify_top_feed">Auto-varsle topp-strømmen</string>
+    <string name="auto_notify_top_feed_desc">Abonner automatisk på varsler fra topp-strømmen for det valgte landet</string>
     <string name="parse_full_content">Fortolk hele innholdet</string>
     <string name="all_allow_notification_toast">Alle merknader fra «%1$s»-gruppen tillates.</string>
     <string name="feeds">Informasjonskanaler</string>

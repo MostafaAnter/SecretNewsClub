@@ -122,6 +122,8 @@
     <string name="unknown">Hindi alam</string>
     <string name="empty">Walang laman</string>
     <string name="all_deny_notification_toast">Lahat ng mga notification sa \"%1$s\" na grupo ay tinatanggihan</string>
+    <string name="auto_notify_top_feed">Awtomatikong i-notify ang nangungunang feed</string>
+    <string name="auto_notify_top_feed_desc">Awtomatikong mag-subscribe sa mga notification mula sa nangungunang feed para sa napiling bansa</string>
     <string name="all_allow_notification_toast">Lahat ng mga notification sa \"%1$s\" na grupo ay pinapayagan</string>
     <string name="all_deny_parse_full_content_toast">Walang punong pag-parse ng nilalaman ng lahat ng mga artikulo sa \"%1$s\" na grupo</string>
     <string name="clear_articles_in_feed_toast">Nilinis lahat ng mga naka-archive na artikulo sa \"%1$s\" na feed</string>

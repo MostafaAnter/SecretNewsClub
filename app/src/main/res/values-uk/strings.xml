@@ -32,6 +32,8 @@
     <string name="selected">Вибрано</string>
     <string name="all_allow_notification_tips">Дозволити всім каналам у групі «%1$s» надсилати сповіщення</string>
     <string name="all_deny_notification_toast">Сповіщення від групи \"%1$s\" відхилено</string>
+    <string name="auto_notify_top_feed">Авто-сповіщення головного каналу</string>
+    <string name="auto_notify_top_feed_desc">Автоматично підписатися на сповіщення головного каналу для вибраної країни</string>
     <string name="parse_full_content">Аналіз повного змісту</string>
     <string name="all_parse_full_content_toast">Дозволено повний розбір вмісту всіх статей у групі \"%1$s\"</string>
     <string name="all">Все</string>

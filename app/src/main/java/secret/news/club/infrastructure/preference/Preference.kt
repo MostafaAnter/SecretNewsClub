@@ -90,5 +90,8 @@ fun Preferences.toSettings(context: Context): Settings {
         // Languages
         languages = LanguagesPreference.fromPreferences(this),
         country = CountryPreference.fromPreferences(this, context),
+
+        // Notifications
+        autoNotifyTopFeed = AutoNotifyTopFeedPreference.fromPreferences(this),
     )
 }

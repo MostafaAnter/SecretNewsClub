@@ -91,6 +91,8 @@
     <string name="clear">삭제</string>
     <string name="all_allow_notification_tips">\"%1$s\" 그룹에 속한 모든 피드의 알림을 받게 됩니다.</string>
     <string name="all_deny_notification_toast">이제 \"%1$s\" 그룹에 속한 모든 피드가 알림을 보내지 않습니다.</string>
+    <string name="auto_notify_top_feed">상위 피드 자동 알림</string>
+    <string name="auto_notify_top_feed_desc">선택한 국가의 상위 피드 알림을 자동으로 구독합니다</string>
     <string name="all_allow_notification_toast">이제 \"%1$s\" 그룹에 속한 모든 피드가 알림을 보냅니다.</string>
     <string name="all_parse_full_content_tips">\"%1$s\" 그룹에 속한 모든 피드가 콘텐츠를 전부 수집하게 됩니다.</string>
     <string name="all_parse_full_content_toast">이제 \"%1$s\" 그룹에 속한 모든 피드가 콘텐츠를 전부 수집합니다.</string>

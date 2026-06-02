@@ -32,6 +32,8 @@
     <string name="allow_notification">Povoliť oznámenia</string>
     <string name="all_allow_notification_tips">Povolí posielanie oznámení všetkým informačným kanálom v skupine \"%1$s\"</string>
     <string name="all_deny_notification_toast">Oznámenia zo skupiny \"%1$s\" sú blokované</string>
+    <string name="auto_notify_top_feed">Automatické oznámenia hlavného kanála</string>
+    <string name="auto_notify_top_feed_desc">Automaticky sa prihlásiť na odber oznámení z hlavného kanála pre vybranú krajinu</string>
     <string name="all_parse_full_content_tips">Načíta obsah všetkých článkov v skupine \"%1$s\"</string>
     <string name="clear_articles">Vymazať články</string>
     <string name="clear_articles_in_group_toast">Vymazané všetky archivované články v skupine \"%1$s\"</string>

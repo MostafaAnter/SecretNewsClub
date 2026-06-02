@@ -238,6 +238,8 @@
     <string name="rename">Renomear</string>
     <string name="change_url">Trocar URL</string>
     <string name="all_deny_notification_toast">As notificacións do grupo «%1$s» están denegadas</string>
+    <string name="auto_notify_top_feed">Notificación automática da fonte principal</string>
+    <string name="auto_notify_top_feed_desc">Subscribirse automaticamente ás notificacións da fonte principal do país seleccionado</string>
     <string name="all_move_to_group_toast">Movidas todas as fontes ao grupo «%1$s»</string>
     <string name="rename_toast">Renomeado a «%1$s»</string>
     <string name="subscribe">Suscribir</string>
