@@ -134,6 +134,14 @@ class DefaultSubscriptionManager @Inject constructor(
                             rssHelper.searchFeed(feed.url)
                         }
                     }.onSuccess { searchedFeed ->
+                        // Discovered feeds often have entries but no <title> in
+                        // their XML. AbstractRssRepository.subscribe force-unwraps
+                        // searchedFeed.title.decodeHTML()!! and NPEs in that case.
+                        // Use the curated/discovered name as a fallback so the
+                        // user always sees a meaningful feed label.
+                        if (searchedFeed.title.isNullOrBlank()) {
+                            searchedFeed.title = feed.name
+                        }
                         rssService.get().subscribe(
                             searchedFeed = searchedFeed,
                             feedLink = feed.url,
