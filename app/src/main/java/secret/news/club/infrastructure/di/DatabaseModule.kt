@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import secret.news.club.domain.repository.AccountDao
 import secret.news.club.domain.repository.ArticleDao
+import secret.news.club.domain.repository.DiscoveredFeedDao
 import secret.news.club.domain.repository.FeedDao
 import secret.news.club.domain.repository.GroupDao
 import secret.news.club.infrastructure.db.AndroidDatabase
@@ -20,6 +21,7 @@ import javax.inject.Singleton
  * - [FeedDao]
  * - [GroupDao]
  * - [AccountDao]
+ * - [DiscoveredFeedDao]
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -44,6 +46,11 @@ object DatabaseModule {
     @Singleton
     fun provideAccountDao(androidDatabase: AndroidDatabase): AccountDao =
         androidDatabase.accountDao()
+
+    @Provides
+    @Singleton
+    fun provideDiscoveredFeedDao(androidDatabase: AndroidDatabase): DiscoveredFeedDao =
+        androidDatabase.discoveredFeedDao()
 
     @Provides
     @Singleton

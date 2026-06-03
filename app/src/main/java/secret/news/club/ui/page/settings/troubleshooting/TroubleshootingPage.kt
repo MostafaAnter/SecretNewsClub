@@ -5,20 +5,31 @@ import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import secret.news.club.domain.service.discovery.DiscoveredFeed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.ReportGmailerrorred
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,13 +38,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import secret.news.club.BuildConfig
 import secret.news.club.R
+import secret.news.club.domain.service.discovery.DiscoverySource
+import secret.news.club.infrastructure.preference.LocalCountry
 import secret.news.club.infrastructure.preference.OpenLinkPreference
 import secret.news.club.ui.component.base.Banner
 import secret.news.club.ui.component.base.DisplayText
@@ -137,6 +153,54 @@ fun TroubleshootingPage(
                     ) {}
                     Spacer(modifier = Modifier.height(24.dp))
                 }
+                if (BuildConfig.DEBUG) {
+                    item {
+                        val country = LocalCountry.current?.value.orEmpty().ifBlank { "EG" }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Subtitle(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            text = "RSS discovery (debug)",
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Button(
+                                onClick = { viewModel.runRssDiscovery(country) },
+                                enabled = !uiState.discoveryRunning,
+                            ) {
+                                Text("Run for $country")
+                            }
+                            if (uiState.discoveryRunning) {
+                                OutlinedButton(onClick = { viewModel.cancelRssDiscovery() }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        }
+                        Text(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            text = if (uiState.discoveryRunning)
+                                "Discovering… ${uiState.discoveredFeeds.size} so far"
+                            else if (uiState.discoveredFeeds.isNotEmpty())
+                                "Found ${uiState.discoveredFeeds.size} feeds"
+                            else
+                                "Tap Run to start. Streams results as they validate.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    items(uiState.discoveredFeeds) { feed ->
+                        DiscoveredFeedRow(feed)
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                        )
+                    }
+                }
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
                     Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
@@ -185,4 +249,54 @@ private fun preferenceFileLauncher(
     launcher.launch("News-Club-" +
             "${context.getCurrentVersion()}-settings-" +
             "${Date().toString(DateFormat.YYYY_MM_DD_DASH_HH_MM_SS_DASH)}.json")
+}
+
+@Composable
+private fun DiscoveredFeedRow(feed: DiscoveredFeed) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = feed.name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = feed.url,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Monospace,
+        )
+        Row(
+            modifier = Modifier.padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            SmallTag(text = feed.category.name)
+            SmallTag(
+                text = when (feed.source) {
+                    DiscoverySource.DOMAIN_PROBE -> "probe"
+                    DiscoverySource.HOMEPAGE_HTML -> "homepage"
+                    DiscoverySource.SEARCH_RESULT -> "search"
+                },
+                emphasized = feed.source == DiscoverySource.SEARCH_RESULT,
+            )
+            SmallTag(text = feed.language)
+        }
+    }
+}
+
+@Composable
+private fun SmallTag(text: String, emphasized: Boolean = false) {
+    AssistChip(
+        onClick = {},
+        label = { Text(text, style = MaterialTheme.typography.labelSmall) },
+        colors = if (emphasized) {
+            AssistChipDefaults.assistChipColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        } else AssistChipDefaults.assistChipColors(),
+    )
 }

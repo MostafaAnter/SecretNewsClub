@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import secret.news.club.domain.service.discovery.RssDiscoveryWorker
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -148,6 +150,22 @@ class FeedsViewModel @Inject constructor(
             }.collect { (sortedList, enabled, _) ->
                 reconcileAutoSubscribedFeed(sortedList, enabled)
             }
+        }
+
+        // RSS discovery trigger #2: country changed → kick a fresh one-time worker
+        // for the new country (REPLACE policy cancels stale runs), and re-arm the
+        // periodic worker so its inputData reflects the new country.
+        viewModelScope.launch {
+            settingsProvider.settingsFlow
+                .mapLatest { it.country?.value.orEmpty() }
+                .distinctUntilChanged()
+                .drop(1)  // skip the initial emission — AndroidApp.discoveryInit handled it
+                .collect { countryCode ->
+                    if (countryCode.isNotBlank()) {
+                        RssDiscoveryWorker.enqueueOnCountryChange(workManager, countryCode)
+                        RssDiscoveryWorker.replacePeriodicCountry(workManager, countryCode)
+                    }
+                }
         }
     }
 

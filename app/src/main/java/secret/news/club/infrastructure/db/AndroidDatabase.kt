@@ -10,8 +10,10 @@ import secret.news.club.domain.model.article.ArchivedArticle
 import secret.news.club.domain.model.article.Article
 import secret.news.club.domain.model.feed.Feed
 import secret.news.club.domain.model.group.Group
+import secret.news.club.domain.model.rss.DiscoveredFeedEntity
 import secret.news.club.domain.repository.AccountDao
 import secret.news.club.domain.repository.ArticleDao
+import secret.news.club.domain.repository.DiscoveredFeedDao
 import secret.news.club.domain.repository.FeedDao
 import secret.news.club.domain.repository.GroupDao
 import secret.news.club.infrastructure.preference.*
@@ -19,8 +21,15 @@ import secret.news.club.ui.ext.toInt
 import java.util.*
 
 @Database(
-    entities = [Account::class, Feed::class, Article::class, Group::class, ArchivedArticle::class],
-    version = 7,
+    entities = [
+        Account::class,
+        Feed::class,
+        Article::class,
+        Group::class,
+        ArchivedArticle::class,
+        DiscoveredFeedEntity::class,
+    ],
+    version = 8,
     autoMigrations = [
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 5, to = 7),
@@ -43,6 +52,7 @@ abstract class AndroidDatabase : RoomDatabase() {
     abstract fun feedDao(): FeedDao
     abstract fun articleDao(): ArticleDao
     abstract fun groupDao(): GroupDao
+    abstract fun discoveredFeedDao(): DiscoveredFeedDao
 
     companion object {
 
@@ -80,6 +90,7 @@ val allMigrations = arrayOf(
     MIGRATION_2_3,
     MIGRATION_3_4,
     MIGRATION_4_5,
+    MIGRATION_7_8,
 )
 
 @Suppress("ClassName")
@@ -156,6 +167,43 @@ object MIGRATION_4_5 : Migration(4, 5) {
             """
             ALTER TABLE account ADD COLUMN lastArticleId TEXT DEFAULT NULL
             """.trimIndent()
+        )
+    }
+}
+
+/**
+ * Adds the [DiscoveredFeedEntity] table only. Existing tables untouched —
+ * this is purely additive, so the article/feed/account paths are unaffected
+ * even if the migration is later rolled back.
+ *
+ * Statements lifted from Room's generated schema for v8 to guarantee the
+ * column types and indices match what Room expects on first open.
+ */
+@Suppress("ClassName")
+object MIGRATION_7_8 : Migration(7, 8) {
+
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `discovered_feed` (
+                `url` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `category` TEXT NOT NULL,
+                `language` TEXT NOT NULL,
+                `countryCode` TEXT NOT NULL,
+                `source` TEXT NOT NULL,
+                `contentFingerprint` TEXT,
+                `discoveredAt` INTEGER NOT NULL,
+                `lastValidatedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`url`)
+            )
+            """.trimIndent()
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_discovered_feed_countryCode` ON `discovered_feed` (`countryCode`)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_discovered_feed_contentFingerprint` ON `discovered_feed` (`contentFingerprint`)"
         )
     }
 }

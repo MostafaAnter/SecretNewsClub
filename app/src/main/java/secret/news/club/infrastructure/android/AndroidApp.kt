@@ -19,6 +19,8 @@ import secret.news.club.domain.service.AppService
 import secret.news.club.domain.service.LocalRssService
 import secret.news.club.domain.service.OpmlService
 import secret.news.club.domain.service.RssService
+import secret.news.club.domain.service.discovery.RssDiscoveryWorker
+import secret.news.club.infrastructure.preference.CountryPreference
 import secret.news.club.infrastructure.db.AndroidDatabase
 import secret.news.club.infrastructure.di.ApplicationScope
 import secret.news.club.infrastructure.di.IODispatcher
@@ -128,9 +130,23 @@ class AndroidApp : Application(), Configuration.Provider {
         applicationScope.launch {
             accountInit()
             workerInit()
+            discoveryInit()
             checkUpdate()
         }
         Coil.setImageLoader(imageLoader)
+    }
+
+    /**
+     * Two of the three discovery triggers — first-launch one-time + weekly periodic.
+     * The third (country-change) is wired in FeedsViewModel where the preference
+     * is actively observed by the UI.
+     */
+    private fun discoveryInit() {
+        val country = settingsProvider.settings.country?.value
+            ?: CountryPreference.default(this).value
+        if (country.isBlank()) return
+        RssDiscoveryWorker.enqueueOnFirstLaunch(workManager, country)
+        RssDiscoveryWorker.enqueuePeriodic(workManager, country)
     }
 
     /**
