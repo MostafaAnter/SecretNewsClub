@@ -4,6 +4,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import secret.news.club.domain.service.PushAnalyticsService
+import secret.news.club.ui.page.common.ExtraName
 import javax.inject.Inject
 
 /**
@@ -27,7 +28,7 @@ class PushMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
         val title = data["title"] ?: return
-        val articleUrl = data["article_url"] ?: return
+        val articleUrl = data[ExtraName.FCM_DATA_ARTICLE_URL] ?: return
 
         pushAnalyticsService.logPushReceived(articleUrl)
         notificationHelper.notifyPush(

@@ -200,6 +200,8 @@ private fun Intent.getLaunchAction(): LaunchAction? {
                 ?.also { removeExtra(ExtraName.ARTICLE_ID) }
             val articleUrl = getStringExtra(ExtraName.ARTICLE_URL)
                 ?.also { removeExtra(ExtraName.ARTICLE_URL) }
+                ?: getStringExtra(ExtraName.FCM_DATA_ARTICLE_URL)
+                    ?.also { removeExtra(ExtraName.FCM_DATA_ARTICLE_URL) }
             if (articleId != null || articleUrl != null) {
                 LaunchAction.OpenArticle(articleId, articleUrl)
             } else {
