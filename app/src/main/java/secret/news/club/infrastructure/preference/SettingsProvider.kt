@@ -145,6 +145,7 @@ class SettingsProvider @Inject constructor(
 
             // Notifications
             LocalAutoNotifyTopFeed provides settings.autoNotifyTopFeed,
+            LocalPushNotificationsEnabled provides settings.pushNotificationsEnabled,
         ) {
             content()
         }

@@ -76,6 +76,13 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-2111511075794057~1047368020"/>
 
+        <!-- AdMob and Firebase Analytics both declare this property; keep AdMob's
+             ad-services config since it predates the Firebase addition. -->
+        <property
+            android:name="android.adservices.AD_SERVICES_CONFIG"
+            android:resource="@xml/gma_ad_services_config"
+            tools:replace="android:resource" />
+
         <service
             android:name="androidx.work.impl.background.systemjob.SystemJobService"
             android:exported="false"

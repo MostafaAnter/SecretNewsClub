@@ -20,6 +20,7 @@ import secret.news.club.domain.service.AccountService
 import secret.news.club.domain.service.AppService
 import secret.news.club.domain.service.LocalRssService
 import secret.news.club.domain.service.OpmlService
+import secret.news.club.domain.service.PushAnalyticsService
 import secret.news.club.domain.service.RssService
 import secret.news.club.domain.service.TopFeedEngagementWorker
 import secret.news.club.domain.service.discovery.RssDiscoveryWorker
@@ -116,6 +117,9 @@ class AndroidApp : Application(), Configuration.Provider {
     @Inject
     lateinit var diffMapHolder: DiffMapHolder
 
+    @Inject
+    lateinit var pushAnalyticsService: PushAnalyticsService
+
     /**
      * When the application startup.
      *
@@ -137,7 +141,33 @@ class AndroidApp : Application(), Configuration.Provider {
             checkUpdate()
         }
         topFeedEngagementInit()
+        pushNotificationsInit()
         Coil.setImageLoader(imageLoader)
+    }
+
+    /**
+     * Subscribes/unsubscribes the device to the broadcast + per-country push topics at app
+     * start and immediately whenever the user flips the "Push notifications" setting or
+     * changes their selected country. No-op on the fdroid flavor, where PushAnalyticsService
+     * resolves to a no-op implementation.
+     */
+    private fun pushNotificationsInit() {
+        applicationScope.launch {
+            settingsProvider.settingsFlow
+                .map { it.pushNotificationsEnabled.value to it.country?.value.orEmpty() }
+                .distinctUntilChanged()
+                .collect { (enabled, countryCode) ->
+                    if (enabled) {
+                        pushAnalyticsService.subscribeToBroadcastTopic()
+                        if (countryCode.isNotBlank()) {
+                            pushAnalyticsService.updateCountryTopicSubscription(countryCode)
+                        }
+                    } else {
+                        pushAnalyticsService.unsubscribeFromBroadcastTopic()
+                        pushAnalyticsService.clearCountryTopicSubscription()
+                    }
+                }
+        }
     }
 
     /**

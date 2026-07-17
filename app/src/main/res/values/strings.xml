@@ -55,6 +55,9 @@
     <string name="all_deny_notification_toast">Notifications from the \"%1$s\" group are denied</string>
     <string name="auto_notify_top_feed">Auto-notify top feed</string>
     <string name="auto_notify_top_feed_desc">Automatically subscribe to notifications from the top feed for your selected country</string>
+    <string name="push_broadcast_channel_name">Announcements</string>
+    <string name="push_notifications">Push notifications</string>
+    <string name="push_notifications_desc">Receive occasional announcements and highlighted articles</string>
     <string name="parse_full_content">Parse full content</string>
     <string name="all_parse_full_content_tips">Full content parsing of all articles in the \"%1$s\" group</string>
     <string name="all_parse_full_content_toast">Full content parsing of all articles in the \"%1$s\" group is allowed</string>

@@ -126,6 +126,12 @@ Thank you to each of the **Secret News Club** translators, and if you would like
 
     > In case of lag, please select Release version build.
 
+## Push Notifications
+
+Maintainers can broadcast a push notification to users (all, or filtered by country)
+via Firebase Cloud Messaging. See [PUSH_NOTIFICATIONS.md](PUSH_NOTIFICATIONS.md) for
+the step-by-step guide.
+
 ## Credits
 
 ### Open Source Projects

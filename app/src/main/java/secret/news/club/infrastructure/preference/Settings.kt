@@ -87,6 +87,7 @@ data class Settings(
 
     // Notifications
     val autoNotifyTopFeed: AutoNotifyTopFeedPreference = AutoNotifyTopFeedPreference.default,
+    val pushNotificationsEnabled: PushNotificationsEnabledPreference = PushNotificationsEnabledPreference.default,
 ) {
     companion object {
         fun default(context: Context) = Settings(

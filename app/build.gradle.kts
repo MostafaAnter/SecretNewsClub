@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.google.services)
 }
 
 fun fetchGitCommitHash(): String {
@@ -34,8 +35,8 @@ android {
         applicationId = "secret.news.club"
         minSdk = 26
         targetSdk = 36
-        versionCode = 47
-        versionName = "0.14.15"
+        versionCode = 48
+        versionName = "0.14.16"
 
         buildConfigField("String", "USER_AGENT_STRING", "\"ReadYou/${versionName}(${versionCode})\"")
 
@@ -191,4 +192,14 @@ dependencies {
     testImplementation(libs.mockito.junit.jupiter)
     testImplementation(libs.mockito.kotlin)
     implementation(libs.play.services.ads)
+
+    // Firebase (push + analytics) — excluded from the fdroid flavor: F-Droid's
+    // inclusion policy forbids proprietary/tracking libraries.
+    "githubImplementation"(platform(libs.firebase.bom))
+    "githubImplementation"(libs.firebase.messaging.ktx)
+    "githubImplementation"(libs.firebase.analytics.ktx)
+
+    "googlePlayImplementation"(platform(libs.firebase.bom))
+    "googlePlayImplementation"(libs.firebase.messaging.ktx)
+    "googlePlayImplementation"(libs.firebase.analytics.ktx)
 }

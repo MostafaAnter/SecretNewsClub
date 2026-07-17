@@ -21,6 +21,8 @@ import secret.news.club.domain.model.article.Article
 import secret.news.club.domain.model.article.ArticleFlowItem
 import secret.news.club.domain.model.article.ArticleWithFeed
 import secret.news.club.domain.model.feed.Feed
+import secret.news.club.domain.service.AccountService
+import secret.news.club.domain.service.ArticleUrlResolver
 import secret.news.club.domain.service.RssService
 import secret.news.club.infrastructure.android.AndroidImageDownloader
 import secret.news.club.infrastructure.android.TextToSpeechManager
@@ -33,10 +35,12 @@ private const val TAG = "ReadingViewModel"
 
 @HiltViewModel(assistedFactory = ReadingViewModel.ReadingViewModelFactory::class)
 class ReadingViewModel @AssistedInject constructor(
-    @Assisted private val initialArticleId: String,
+    @Assisted("articleId") private val initialArticleId: String,
     @Assisted private val initialListIndex: Int?,
+    @Assisted("fallbackUrl") private val fallbackUrl: String?,
     private val rssService: RssService,
     private val readerCacheHelper: ReaderCacheHelper,
+    private val accountService: AccountService,
     @IODispatcher private val ioDispatcher: CoroutineDispatcher,
     @ApplicationScope private val applicationScope: CoroutineScope,
     val textToSpeechManager: TextToSpeechManager,
@@ -77,10 +81,13 @@ class ReadingViewModel @AssistedInject constructor(
                 }
 
             val item =
-                itemByIndex?.articleWithFeed ?: (itemFromList?.articleWithFeed ?: rssService.get()
-                    .findArticleById(articleId)!!)
+                itemByIndex?.articleWithFeed
+                    ?: itemFromList?.articleWithFeed
+                    ?: rssService.get().findArticleById(articleId)
+                    ?: fallbackUrl?.let { buildTransientArticleWithFeed(articleId, it) }
+                    ?: return@launch
 
-            if (diffMapHolder.checkIfUnread(item)) {
+            if (item.feed.id != ArticleUrlResolver.TRANSIENT_FEED_ID && diffMapHolder.checkIfUnread(item)) {
                 diffMapHolder.updateDiff(item, isUnread = false)
             }
             item.run {
@@ -101,6 +108,40 @@ class ReadingViewModel @AssistedInject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Builds an in-memory ArticleWithFeed for a push-notification URL that isn't in Room yet
+     * (the recipient may never have subscribed to that feed). Never persisted; renderFullContent
+     * fetches+parses the real page via the existing Readability pipeline, same as any article.
+     */
+    private fun buildTransientArticleWithFeed(id: String, url: String): ArticleWithFeed {
+        val accountId = accountService.getCurrentAccountId()
+        val transientFeed = Feed(
+            id = ArticleUrlResolver.TRANSIENT_FEED_ID,
+            name = "",
+            icon = null,
+            url = url,
+            groupId = "",
+            accountId = accountId,
+            isNotification = false,
+            isFullContent = true,
+            isBrowser = false,
+        )
+        val transientArticle = Article(
+            id = id,
+            date = Date(),
+            title = "",
+            author = null,
+            rawDescription = "",
+            shortDescription = "",
+            img = null,
+            link = url,
+            feedId = ArticleUrlResolver.TRANSIENT_FEED_ID,
+            accountId = accountId,
+            isUnread = false,
+        )
+        return ArticleWithFeed(transientArticle, transientFeed)
     }
 
     suspend fun ReaderState.renderContent(articleWithFeed: ArticleWithFeed): ReaderState {
@@ -145,6 +186,7 @@ class ReadingViewModel @AssistedInject constructor(
     }
 
     fun updateReadStatus(isUnread: Boolean) {
+        if (currentFeed?.id == ArticleUrlResolver.TRANSIENT_FEED_ID) return
         readingUiState.value.articleWithFeed?.let {
             diffMapHolder.updateDiff(
                 it,
@@ -155,6 +197,7 @@ class ReadingViewModel @AssistedInject constructor(
     }
 
     fun updateStarredStatus(isStarred: Boolean) {
+        if (currentFeed?.id == ArticleUrlResolver.TRANSIENT_FEED_ID) return
         applicationScope.launch(ioDispatcher) {
             _readingUiState.update { it.copy(isStarred = isStarred) }
             currentArticle?.let {
@@ -234,7 +277,9 @@ class ReadingViewModel @AssistedInject constructor(
     @AssistedFactory
     interface ReadingViewModelFactory {
         fun create(
-            articleId: String, initialListIndex: Int?
+            @Assisted("articleId") articleId: String,
+            initialListIndex: Int?,
+            @Assisted("fallbackUrl") fallbackUrl: String? = null,
         ): ReadingViewModel
     }
 }

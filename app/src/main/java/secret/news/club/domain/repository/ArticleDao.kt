@@ -648,7 +648,7 @@ interface ArticleDao {
 
     @Query(
         """
-        SELECT * from article 
+        SELECT * from article
         WHERE link in (:linkList)
         AND feedId = :feedId
         AND accountId = :accountId
@@ -659,6 +659,27 @@ interface ArticleDao {
         feedId: String,
         accountId: Int,
     ): List<Article>
+
+    @Query(
+        """
+        SELECT id FROM article
+        WHERE link = :link
+        AND accountId = :accountId
+        ORDER BY date DESC LIMIT 1
+        """
+    )
+    suspend fun queryIdByLink(link: String, accountId: Int): String?
+
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM article
+        WHERE accountId = :accountId
+        ORDER BY date DESC
+        LIMIT :limit
+        """
+    )
+    suspend fun queryRecentArticlesWithFeed(accountId: Int, limit: Int = 20): List<ArticleWithFeed>
 
     @Query(
         """

@@ -178,6 +178,8 @@ data class DataStoreKey<T>(
         const val topFeedLastNotifiedAt = "topFeedLastNotifiedAt"
         const val topFeedDailyNotifyCount = "topFeedDailyNotifyCount"
         const val topFeedDailyCounterEpochDay = "topFeedDailyCounterEpochDay"
+        const val pushNotificationsEnabled = "pushNotificationsEnabled"
+        const val pushSubscribedCountryTopic = "pushSubscribedCountryTopic"
 
         val keys: MutableMap<String, DataStoreKey<*>> = mutableMapOf(
             // Version
@@ -261,6 +263,8 @@ data class DataStoreKey<T>(
             topFeedLastNotifiedAt to DataStoreKey(longPreferencesKey(topFeedLastNotifiedAt), Long::class.java),
             topFeedDailyNotifyCount to DataStoreKey(intPreferencesKey(topFeedDailyNotifyCount), Int::class.java),
             topFeedDailyCounterEpochDay to DataStoreKey(longPreferencesKey(topFeedDailyCounterEpochDay), Long::class.java),
+            pushNotificationsEnabled to DataStoreKey(booleanPreferencesKey(pushNotificationsEnabled), Boolean::class.java),
+            pushSubscribedCountryTopic to DataStoreKey(stringPreferencesKey(pushSubscribedCountryTopic), String::class.java),
         )
     }
 }

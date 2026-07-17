@@ -5,11 +5,14 @@ import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import secret.news.club.R
 import secret.news.club.domain.model.feed.FeedWithArticle
 import secret.news.club.ui.page.common.ExtraName
@@ -19,6 +22,7 @@ import javax.inject.Inject
 class NotificationHelper @Inject constructor(
     @ApplicationContext
     private val context: Context,
+    private val okHttpClient: OkHttpClient,
 ) {
 
     private val notificationManager: NotificationManagerCompat =
@@ -27,6 +31,13 @@ class NotificationHelper @Inject constructor(
                 NotificationChannel(
                     NotificationGroupName.ARTICLE_UPDATE,
                     NotificationGroupName.ARTICLE_UPDATE,
+                    NotificationManager.IMPORTANCE_DEFAULT
+                )
+            )
+            createNotificationChannel(
+                NotificationChannel(
+                    NotificationGroupName.PUSH_BROADCAST,
+                    context.getString(R.string.push_broadcast_channel_name),
                     NotificationManager.IMPORTANCE_DEFAULT
                 )
             )
@@ -105,4 +116,49 @@ class NotificationHelper @Inject constructor(
 
         notificationManager.notify(notificationId, builder.build())
     }
+
+    /**
+     * Notification for a broadcast push (see PushMessagingService), keyed by article URL.
+     * Called from FCM's onMessageReceived, which already runs off the main thread, so the
+     * synchronous image fetch below is safe.
+     */
+    fun notifyPush(title: String, body: String, articleUrl: String, imageUrl: String?) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
+        val notificationId = articleUrl.hashCode()
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(ExtraName.ARTICLE_URL, articleUrl)
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val largeIcon = imageUrl?.let { fetchBitmap(it) }
+            ?: BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_round)
+
+        val builder = NotificationCompat.Builder(context, NotificationGroupName.PUSH_BROADCAST)
+            .setSmallIcon(R.drawable.ic_launcher_round)
+            .setLargeIcon(largeIcon)
+            .setContentIntent(contentIntent)
+            .setAutoCancel(true)
+            .setContentTitle(title)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+
+        if (body.isNotBlank()) {
+            builder.setContentText(body)
+        }
+
+        notificationManager.notify(notificationId, builder.build())
+    }
+
+    private fun fetchBitmap(url: String): Bitmap? = runCatching {
+        okHttpClient.newCall(Request.Builder().url(url).build()).execute().use { response ->
+            response.body.byteStream().use { BitmapFactory.decodeStream(it) }
+        }
+    }.getOrNull()
 }

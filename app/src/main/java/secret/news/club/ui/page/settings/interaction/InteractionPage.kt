@@ -34,6 +34,7 @@ import secret.news.club.infrastructure.preference.LocalMarkAsReadOnScroll
 import secret.news.club.infrastructure.preference.LocalOpenLink
 import secret.news.club.infrastructure.preference.LocalOpenLinkSpecificBrowser
 import secret.news.club.infrastructure.preference.LocalPullToSwitchArticle
+import secret.news.club.infrastructure.preference.LocalPushNotificationsEnabled
 import secret.news.club.infrastructure.preference.LocalSettings
 import secret.news.club.infrastructure.preference.LocalSharedContent
 import secret.news.club.infrastructure.preference.LocalSortUnreadArticles
@@ -51,6 +52,7 @@ import secret.news.club.ui.component.base.RadioDialog
 import secret.news.club.ui.component.base.RadioDialogOption
 import secret.news.club.ui.component.base.Subtitle
 import secret.news.club.ui.ext.getBrowserAppList
+import secret.news.club.ui.ext.isFDroid
 import secret.news.club.ui.page.settings.SettingItem
 import secret.news.club.ui.theme.palette.onLight
 
@@ -66,6 +68,7 @@ fun InteractionPage(
     val markAsReadOnScroll = LocalMarkAsReadOnScroll.current
     val hideEmptyGroups = LocalHideEmptyGroups.current
     val autoNotifyTopFeed = LocalAutoNotifyTopFeed.current
+    val pushNotificationsEnabled = LocalPushNotificationsEnabled.current
     val sortUnreadArticles = LocalSortUnreadArticles.current
     val pullToSwitchArticle = LocalPullToSwitchArticle.current
     val openLink = LocalOpenLink.current
@@ -149,6 +152,19 @@ fun InteractionPage(
                     ) {
                         RYSwitch(activated = autoNotifyTopFeed.value) {
                             autoNotifyTopFeed.toggle(context, scope)
+                        }
+                    }
+                    if (!isFDroid) {
+                        SettingItem(
+                            title = stringResource(R.string.push_notifications),
+                            desc = stringResource(R.string.push_notifications_desc),
+                            onClick = {
+                                pushNotificationsEnabled.toggle(context, scope)
+                            },
+                        ) {
+                            RYSwitch(activated = pushNotificationsEnabled.value) {
+                                pushNotificationsEnabled.toggle(context, scope)
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(24.dp))

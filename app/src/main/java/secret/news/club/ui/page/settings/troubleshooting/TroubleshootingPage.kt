@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,14 +41,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import secret.news.club.BuildConfig
 import secret.news.club.R
+import secret.news.club.domain.model.article.ArticleWithFeed
 import secret.news.club.domain.service.discovery.DiscoverySource
 import secret.news.club.infrastructure.preference.LocalCountry
 import secret.news.club.infrastructure.preference.OpenLinkPreference
@@ -200,6 +205,29 @@ fun TroubleshootingPage(
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                         )
                     }
+                    item {
+                        LaunchedEffect(Unit) { viewModel.loadRecentArticlesForPushTesting() }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Subtitle(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            text = "Push test helper (debug)",
+                        )
+                        Text(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            text = "Copy a real, already-synced article's fields to paste into " +
+                                "Firebase Console → Cloud Messaging → custom data " +
+                                "(title / article_url / image_url).",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    items(uiState.recentArticlesForPushTesting) { articleWithFeed ->
+                        PushTestArticleRow(articleWithFeed)
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                        )
+                    }
                 }
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
@@ -283,6 +311,49 @@ private fun DiscoveredFeedRow(feed: DiscoveredFeed) {
                 emphasized = feed.source == DiscoverySource.SEARCH_RESULT,
             )
             SmallTag(text = feed.language)
+        }
+    }
+}
+
+@Composable
+private fun PushTestArticleRow(articleWithFeed: ArticleWithFeed) {
+    val clipboardManager = LocalClipboardManager.current
+    val article = articleWithFeed.article
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = article.title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = "${articleWithFeed.feed.name} · ${article.link}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontFamily = FontFamily.Monospace,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Row(
+            modifier = Modifier.padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TextButton(onClick = {
+                clipboardManager.setText(AnnotatedString(article.title))
+            }) { Text("Copy title") }
+            TextButton(onClick = {
+                clipboardManager.setText(AnnotatedString(article.link))
+            }) { Text("Copy article_url") }
+            if (!article.img.isNullOrBlank()) {
+                TextButton(onClick = {
+                    clipboardManager.setText(AnnotatedString(article.img.orEmpty()))
+                }) { Text("Copy image_url") }
+            }
         }
     }
 }

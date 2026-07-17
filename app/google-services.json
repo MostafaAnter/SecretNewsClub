@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "456265456604",
+    "project_id": "news-club-aa658",
+    "storage_bucket": "news-club-aa658.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:456265456604:android:1a7acd28bd3735d0b78d19",
+        "android_client_info": {
+          "package_name": "secret.news.club"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiWry7jNi7_SyyviB-q0G83IRdDydbgCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:456265456604:android:9c12dae511e69d26b78d19",
+        "android_client_info": {
+          "package_name": "secret.news.club.google.play"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiWry7jNi7_SyyviB-q0G83IRdDydbgCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

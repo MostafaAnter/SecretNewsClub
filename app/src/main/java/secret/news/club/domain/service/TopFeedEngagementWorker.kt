@@ -56,10 +56,18 @@ constructor(
         private const val CHECK_INTERVAL_HOURS = 4L
         private const val MORNING_ANCHOR_HOUR = 8
 
+        /**
+         * Uses KEEP, not UPDATE: this is called on every app start, and UPDATE preserves the
+         * *original* lastEnqueueTime while taking the freshly-computed initialDelay from this
+         * call, so `lastEnqueueTime + initialDelay` silently drifts away from the intended next
+         * 8 AM anchor on every relaunch. KEEP no-ops while a schedule is already pending and only
+         * inserts (with a correctly "now"-anchored delay) when none exists — first enable, or
+         * after [cancel].
+         */
         fun enqueuePeriodic(workManager: WorkManager) {
             workManager.enqueueUniquePeriodicWork(
                 WORK_NAME_PERIODIC,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingPeriodicWorkPolicy.KEEP,
                 PeriodicWorkRequestBuilder<TopFeedEngagementWorker>(
                     CHECK_INTERVAL_HOURS,
                     TimeUnit.HOURS

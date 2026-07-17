@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import secret.news.club.domain.model.article.ArticleWithFeed
 import secret.news.club.domain.model.rss.RssCategory
+import secret.news.club.domain.repository.ArticleDao
 import secret.news.club.domain.service.AccountService
 import secret.news.club.domain.service.OpmlService
 import secret.news.club.domain.service.RssService
@@ -35,6 +37,7 @@ class TroubleshootingViewModel @Inject constructor(
     private val rssService: RssService,
     private val opmlService: OpmlService,
     private val rssDiscoveryEngine: RssDiscoveryEngine,
+    private val articleDao: ArticleDao,
     @IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     @DefaultDispatcher
@@ -110,6 +113,19 @@ class TroubleshootingViewModel @Inject constructor(
         discoveryJob?.cancel()
         _troubleshootingUiState.update { it.copy(discoveryRunning = false) }
     }
+
+    /**
+     * Debug-only push testing aid: surfaces real, already-synced articles so their exact
+     * title/link/image can be copied straight into the Firebase Console's custom-data
+     * fields (title / article_url / image_url) when composing a test broadcast push.
+     */
+    fun loadRecentArticlesForPushTesting() {
+        viewModelScope.launch(ioDispatcher) {
+            val accountId = accountService.getCurrentAccountId()
+            val articles = articleDao.queryRecentArticlesWithFeed(accountId)
+            _troubleshootingUiState.update { it.copy(recentArticlesForPushTesting = articles) }
+        }
+    }
 }
 
 data class TroubleshootingUiState(
@@ -118,4 +134,5 @@ data class TroubleshootingUiState(
     val discoveryRunning: Boolean = false,
     val discoveryCountry: String = "",
     val discoveredFeeds: List<DiscoveredFeed> = emptyList(),
+    val recentArticlesForPushTesting: List<ArticleWithFeed> = emptyList(),
 )

@@ -14,8 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import kotlinx.coroutines.flow.first
 import secret.news.club.infrastructure.preference.InitialPagePreference
 import secret.news.club.infrastructure.preference.LocalDarkTheme
@@ -131,14 +133,27 @@ fun HomeEntry(
                         animatedVisibilityScope = this,
                     )
                 }
-                animatedComposable(route = "${RouteName.READING}/{articleId}") { entry ->
+                animatedComposable(
+                    route = "${RouteName.READING}/{articleId}?fallbackUrl={fallbackUrl}",
+                    arguments = listOf(
+                        navArgument("articleId") { type = NavType.StringType },
+                        navArgument("fallbackUrl") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { entry ->
                     val articleId = entry.arguments?.getString("articleId")?.also {
                         entry.arguments?.remove("articleId")
+                    }
+                    val fallbackUrl = entry.arguments?.getString("fallbackUrl")?.also {
+                        entry.arguments?.remove("fallbackUrl")
                     }
 
                     val readingViewModel: ReadingViewModel =
                         hiltViewModel<ReadingViewModel, ReadingViewModel.ReadingViewModelFactory> { factory ->
-                            factory.create(articleId.toString(), null)
+                            factory.create(articleId.toString(), null, fallbackUrl)
                         }
 
                     ReadingPage(

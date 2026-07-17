@@ -93,5 +93,6 @@ fun Preferences.toSettings(context: Context): Settings {
 
         // Notifications
         autoNotifyTopFeed = AutoNotifyTopFeedPreference.fromPreferences(this),
+        pushNotificationsEnabled = PushNotificationsEnabledPreference.fromPreferences(this),
     )
 }

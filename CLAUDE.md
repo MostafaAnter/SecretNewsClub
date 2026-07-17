@@ -79,6 +79,23 @@ Network providers live in `infrastructure/rss/provider/`:
 | Pagination | Paging 3 |
 | Logging | Timber |
 
+## Firebase setup (push + analytics)
+
+Firebase (Cloud Messaging + Analytics) is wired for the `github` and `googlePlay` flavors only — `fdroid` ships neither dependency nor code that references `com.google.firebase.*`, per F-Droid's anti-tracking/non-free-network inclusion policy. Common code (`MainActivity`, `AndroidApp`, `NotificationHelper`) only ever depends on the `PushAnalyticsService` interface (`domain/service/PushAnalyticsService.kt`); each flavor binds its own implementation (`FirebasePushAnalyticsService` for github/googlePlay, `NoOpPushAnalyticsService` for fdroid).
+
+- `app/google-services.json` is committed as a **non-functional placeholder** (mirrors `signature/keystore.properties`'s pattern). Replace it locally with the real file from the Firebase Console project before testing push/analytics or building a release you intend to actually distribute. The Firebase project should register **two** Android apps — `secret.news.club` (covers `github`) and `secret.news.club.google.play` (covers `googlePlay`, due to `applicationIdSuffix`) — both land in one downloaded `google-services.json`.
+- Every install subscribes to the FCM topic `broadcast_all` **and** a per-country topic `broadcast_country_<COUNTRY_CODE>` (e.g. `broadcast_country_US`) matching the user's selected country setting, when the "Push notifications" setting is on (Settings → Interaction → Feeds page, hidden on fdroid). Changing the selected country unsubscribes from the old country topic and subscribes to the new one — only one country topic is held at a time (tracked via `pushSubscribedCountryTopic` in DataStore). Send a broadcast from Firebase Console → Cloud Messaging → New notification/campaign, targeting either `broadcast_all` (everyone) or a specific `broadcast_country_<CODE>` topic, and set the **data payload** (not the notification-message fields) with these keys:
+
+  | key | required | meaning |
+  |---|---|---|
+  | `title` | yes | notification title |
+  | `body` | no | notification body |
+  | `article_url` | yes | canonical article URL — used to find/open the article on tap |
+  | `image_url` | no | optional large-icon image |
+
+  Messages are handled entirely by `PushMessagingService` (data-only, not an FCM "notification" message), so the same behavior applies whether the app is foregrounded, backgrounded, or killed.
+- DAU needs no custom code — Firebase Analytics' automatic `session_start`/`first_open` events populate the standard "Active Users" dashboard once the SDK is linked to a real project.
+
 ## Important Files
 
 - `app/build.gradle.kts` — flavors, signing, Compose feature flags, APK naming (includes git hash)

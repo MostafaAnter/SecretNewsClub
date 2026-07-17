@@ -3,6 +3,7 @@ package secret.news.club.infrastructure.android
 import android.Manifest
 import android.content.Intent
 import android.database.CursorWindow
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -33,7 +34,9 @@ import java.lang.reflect.Field
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import secret.news.club.domain.service.AccountService
+import secret.news.club.domain.service.ArticleUrlResolver
 import secret.news.club.domain.service.DefaultSubscriptionManager
+import secret.news.club.domain.service.PushAnalyticsService
 import secret.news.club.infrastructure.compose.ProvideCompositionLocals
 import secret.news.club.infrastructure.preference.AccountSettingsProvider
 import secret.news.club.infrastructure.preference.LanguagesPreference
@@ -54,6 +57,10 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var accountService: AccountService
 
     @Inject lateinit var defaultSubscriptionManager: DefaultSubscriptionManager
+
+    @Inject lateinit var articleUrlResolver: ArticleUrlResolver
+
+    @Inject lateinit var pushAnalyticsService: PushAnalyticsService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -121,10 +128,27 @@ class MainActivity : AppCompatActivity() {
                                 intent.getLaunchAction()?.let { action ->
                                     when (action) {
                                         is LaunchAction.OpenArticle -> {
-                                            navController.navigate(
-                                                "${RouteName.READING}/${action.articleId}"
-                                            ) {
-                                                launchSingleTop = true
+                                            lifecycleScope.launch {
+                                                val localId = action.articleId ?: action.fallbackUrl?.let {
+                                                    articleUrlResolver.findLocalArticleIdByUrl(it)
+                                                }
+                                                val route = when {
+                                                    localId != null -> "${RouteName.READING}/$localId"
+                                                    action.fallbackUrl != null -> {
+                                                        val syntheticId =
+                                                            articleUrlResolver.transientArticleId(action.fallbackUrl)
+                                                        "${RouteName.READING}/$syntheticId" +
+                                                            "?fallbackUrl=${Uri.encode(action.fallbackUrl)}"
+                                                    }
+
+                                                    else -> null
+                                                }
+                                                route?.let {
+                                                    navController.navigate(it) { launchSingleTop = true }
+                                                }
+                                                action.fallbackUrl?.let {
+                                                    pushAnalyticsService.logPushOpened(it)
+                                                }
                                             }
                                         }
 
@@ -155,7 +179,8 @@ class MainActivity : AppCompatActivity() {
 sealed interface LaunchAction {
     data class Subscribe(val url: String) : LaunchAction
 
-    data class OpenArticle(val articleId: String) : LaunchAction
+    data class OpenArticle(val articleId: String? = null, val fallbackUrl: String? = null) :
+        LaunchAction
 }
 
 private fun Intent.getLaunchAction(): LaunchAction? {
@@ -171,9 +196,15 @@ private fun Intent.getLaunchAction(): LaunchAction? {
         }
 
         else -> {
-            getStringExtra(ExtraName.ARTICLE_ID)
+            val articleId = getStringExtra(ExtraName.ARTICLE_ID)
                 ?.also { removeExtra(ExtraName.ARTICLE_ID) }
-                ?.let { LaunchAction.OpenArticle(it) }
+            val articleUrl = getStringExtra(ExtraName.ARTICLE_URL)
+                ?.also { removeExtra(ExtraName.ARTICLE_URL) }
+            if (articleId != null || articleUrl != null) {
+                LaunchAction.OpenArticle(articleId, articleUrl)
+            } else {
+                null
+            }
         }
     }
 }
