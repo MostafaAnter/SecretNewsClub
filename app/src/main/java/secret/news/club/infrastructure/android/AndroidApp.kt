@@ -10,6 +10,8 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import secret.news.club.BuildConfig
@@ -19,6 +21,7 @@ import secret.news.club.domain.service.AppService
 import secret.news.club.domain.service.LocalRssService
 import secret.news.club.domain.service.OpmlService
 import secret.news.club.domain.service.RssService
+import secret.news.club.domain.service.TopFeedEngagementWorker
 import secret.news.club.domain.service.discovery.RssDiscoveryWorker
 import secret.news.club.infrastructure.preference.CountryPreference
 import secret.news.club.infrastructure.db.AndroidDatabase
@@ -133,7 +136,25 @@ class AndroidApp : Application(), Configuration.Provider {
             discoveryInit()
             checkUpdate()
         }
+        topFeedEngagementInit()
         Coil.setImageLoader(imageLoader)
+    }
+
+    /**
+     * Arms/disarms [TopFeedEngagementWorker] at app start and immediately whenever
+     * the user flips the "Auto-notify top feed" setting — not just at next app start,
+     * since the whole point is to keep working while the app is killed.
+     */
+    private fun topFeedEngagementInit() {
+        applicationScope.launch {
+            settingsProvider.settingsFlow
+                .map { it.autoNotifyTopFeed.value }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    if (enabled) TopFeedEngagementWorker.enqueuePeriodic(workManager)
+                    else TopFeedEngagementWorker.cancel(workManager)
+                }
+        }
     }
 
     /**

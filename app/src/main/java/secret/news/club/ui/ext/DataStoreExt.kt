@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
@@ -174,6 +175,9 @@ data class DataStoreKey<T>(
         const val country = "country"
         const val autoNotifyTopFeed = "autoNotifyTopFeed"
         const val autoSubscribedFeedId = "autoSubscribedFeedId"
+        const val topFeedLastNotifiedAt = "topFeedLastNotifiedAt"
+        const val topFeedDailyNotifyCount = "topFeedDailyNotifyCount"
+        const val topFeedDailyCounterEpochDay = "topFeedDailyCounterEpochDay"
 
         val keys: MutableMap<String, DataStoreKey<*>> = mutableMapOf(
             // Version
@@ -254,6 +258,9 @@ data class DataStoreKey<T>(
             country to DataStoreKey(stringPreferencesKey(country), String::class.java),
             autoNotifyTopFeed to DataStoreKey(booleanPreferencesKey(autoNotifyTopFeed), Boolean::class.java),
             autoSubscribedFeedId to DataStoreKey(stringPreferencesKey(autoSubscribedFeedId), String::class.java),
+            topFeedLastNotifiedAt to DataStoreKey(longPreferencesKey(topFeedLastNotifiedAt), Long::class.java),
+            topFeedDailyNotifyCount to DataStoreKey(intPreferencesKey(topFeedDailyNotifyCount), Int::class.java),
+            topFeedDailyCounterEpochDay to DataStoreKey(longPreferencesKey(topFeedDailyCounterEpochDay), Long::class.java),
         )
     }
 }

@@ -1,8 +1,10 @@
 package secret.news.club.infrastructure.di
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -11,6 +13,7 @@ import secret.news.club.domain.data.ArticlePagingListUseCase
 import secret.news.club.domain.data.DiffMapHolder
 import secret.news.club.domain.data.FilterStateUseCase
 import secret.news.club.domain.data.GroupWithFeedsListUseCase
+import secret.news.club.domain.data.TopFeedUseCase
 import secret.news.club.domain.service.AccountService
 import secret.news.club.domain.service.RssService
 import secret.news.club.infrastructure.android.AndroidStringsHelper
@@ -67,6 +70,22 @@ object UseCaseModule {
             filterStateUseCase,
             diffMapHolder,
             accountService,
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun providesTopFeedUseCase(
+        @ApplicationContext context: Context,
+        settingsProvider: SettingsProvider,
+        rssService: RssService,
+        groupWithFeedsListUseCase: GroupWithFeedsListUseCase,
+    ): TopFeedUseCase {
+        return TopFeedUseCase(
+            context,
+            settingsProvider,
+            rssService,
+            groupWithFeedsListUseCase,
         )
     }
 }

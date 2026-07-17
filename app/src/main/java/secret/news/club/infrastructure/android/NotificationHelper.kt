@@ -14,7 +14,6 @@ import secret.news.club.R
 import secret.news.club.domain.model.feed.FeedWithArticle
 import secret.news.club.ui.page.common.ExtraName
 import secret.news.club.ui.page.common.NotificationGroupName
-import java.util.*
 import javax.inject.Inject
 
 class NotificationHelper @Inject constructor(
@@ -41,81 +40,69 @@ class NotificationHelper @Inject constructor(
     }
 
     fun notify(feedWithArticle: FeedWithArticle) {
+        val articles = feedWithArticle.articles
+        if (articles.isEmpty()) return
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
         notificationManager.createNotificationChannelGroup(
             NotificationChannelGroup(
                 feedWithArticle.feed.id,
                 feedWithArticle.feed.name
             )
         )
-        feedWithArticle.articles.forEach { article ->
-            val builder = NotificationCompat.Builder(context, NotificationGroupName.ARTICLE_UPDATE)
-                .setSmallIcon(R.drawable.ic_launcher_round)
-                .setLargeIcon(
-                    (BitmapFactory.decodeResource(
-                        context.resources,
-                        R.drawable.ic_launcher_round
-                    ))
-                )
-                .setContentTitle(article.title)
-                .setContentIntent(
-                    PendingIntent.getActivity(
-                        context,
-                        Random().nextInt() + article.id.hashCode(),
-                        Intent(context, MainActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                                    Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            putExtra(
-                                ExtraName.ARTICLE_ID,
-                                article.id
-                            )
-                        },
-                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                    )
-                )
-                .setGroup(feedWithArticle.feed.id)
+
+        // Stable per-feed id: re-notifying the same feed replaces the previous
+        // notification instead of stacking a new one, on top of the coalescing below.
+        val notificationId = feedWithArticle.feed.id.hashCode()
+        val latestArticle = articles.first()
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(ExtraName.ARTICLE_ID, latestArticle.id)
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val builder = NotificationCompat.Builder(context, NotificationGroupName.ARTICLE_UPDATE)
+            .setSmallIcon(R.drawable.ic_launcher_round)
+            .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_round))
+            .setContentIntent(contentIntent)
+            .setGroup(feedWithArticle.feed.id)
+            .setAutoCancel(true)
+
+        if (articles.size == 1) {
+            builder
+                .setContentTitle(latestArticle.title)
                 .setStyle(
                     NotificationCompat.BigTextStyle()
-                        .bigText(article.shortDescription)
+                        .bigText(latestArticle.shortDescription)
                         .setSummaryText(feedWithArticle.feed.name)
                 )
-
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return
-            }
-            notificationManager.notify(
-                Random().nextInt() + article.id.hashCode(),
-                builder.build().apply {
-                    flags = Notification.FLAG_AUTO_CANCEL
-                }
-            )
+        } else {
+            builder
+                .setContentTitle(feedWithArticle.feed.name)
+                .setContentText(
+                    context.resources.getQuantityString(
+                        R.plurals.new_articles_notification,
+                        articles.size,
+                        articles.size
+                    )
+                )
+                .setStyle(
+                    // Note: InboxStyle declares its own member fun named `apply`, which
+                    // shadows kotlin.apply via SAM conversion — build it via plain chaining.
+                    NotificationCompat.InboxStyle()
+                        .setBigContentTitle(feedWithArticle.feed.name)
+                        .setSummaryText(feedWithArticle.feed.name)
+                        .also { style -> articles.take(5).forEach { style.addLine(it.title) } }
+                )
         }
 
-        if (feedWithArticle.articles.size > 1) {
-            notificationManager.notify(
-                Random().nextInt() + feedWithArticle.feed.id.hashCode(),
-                NotificationCompat.Builder(context, NotificationGroupName.ARTICLE_UPDATE)
-                    .setSmallIcon(R.drawable.ic_launcher_round)
-                    .setLargeIcon(
-                        (BitmapFactory.decodeResource(
-                            context.resources,
-                            R.drawable.ic_launcher_round
-                        ))
-                    )
-                    .setStyle(
-                        NotificationCompat.InboxStyle()
-                            .setSummaryText(feedWithArticle.feed.name)
-                    )
-                    .setGroup(feedWithArticle.feed.id)
-                    .setGroupSummary(true)
-                    .build()
-            )
-        }
+        notificationManager.notify(notificationId, builder.build())
     }
 }

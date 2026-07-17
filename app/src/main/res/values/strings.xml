@@ -16,6 +16,10 @@
         <item quantity="one">%1$d starred item</item>
         <item quantity="other">%1$d starred items</item>
     </plurals>
+    <plurals name="new_articles_notification">
+        <item quantity="one">%1$d new article</item>
+        <item quantity="other">%1$d new articles</item>
+    </plurals>
     <string name="feeds">Feeds</string>
     <string name="syncing">Syncing…</string>
     <string name="loading">Loading…</string>
