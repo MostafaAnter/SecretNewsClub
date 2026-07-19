@@ -379,4 +379,5 @@
     <string name="no_feeds_for_country">No feeds available for the selected country.</string>
     <string name="failed_to_load_feed">Failed to load feed: %1$s</string>
     <string name="feeds_updated">Feeds updated.</string>
+    <string name="no_feeds_yet">No feeds yet. Tap + to add one.</string>
 </resources>

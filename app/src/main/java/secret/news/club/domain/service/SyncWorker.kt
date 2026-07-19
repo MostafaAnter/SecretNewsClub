@@ -40,6 +40,13 @@ constructor(
         private const val WORK_NAME_ONETIME = "SYNC_ONETIME"
         const val WORK_TAG = "SYNC_TAG"
 
+        /**
+         * Only applied to syncs the user directly asked for (pull-to-refresh, "sync now",
+         * importing an OPML, subscribing to a feed, etc). Startup/periodic auto-syncs never
+         * carry this tag, so UI observing it won't show a refresh spinner for background work.
+         */
+        const val USER_SYNC_TAG = "SYNC_USER_TAG"
+
         fun cancelOneTimeWork(workManager: WorkManager) {
             workManager.cancelUniqueWork(WORK_NAME_ONETIME)
         }
@@ -49,16 +56,18 @@ constructor(
             workManager.cancelUniqueWork(READER_WORK_NAME_PERIODIC)
         }
 
-        fun enqueueOneTimeWork(workManager: WorkManager, inputData: Data = workDataOf()) {
+        fun enqueueOneTimeWork(
+            workManager: WorkManager,
+            inputData: Data = workDataOf(),
+            userInitiated: Boolean = true,
+        ) {
+            val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+                .addTag(WORK_TAG)
+                .apply { if (userInitiated) addTag(USER_SYNC_TAG) }
+                .setInputData(inputData)
+                .build()
             workManager
-                .beginUniqueWork(
-                    WORK_NAME_ONETIME,
-                    ExistingWorkPolicy.KEEP,
-                    OneTimeWorkRequestBuilder<SyncWorker>()
-                        .addTag(WORK_TAG)
-                        .setInputData(inputData)
-                        .build(),
-                )
+                .beginUniqueWork(WORK_NAME_ONETIME, ExistingWorkPolicy.KEEP, syncRequest)
                 .then(OneTimeWorkRequestBuilder<ReaderWorker>().build())
                 .enqueue()
         }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import secret.news.club.domain.model.group.Group
+import secret.news.club.domain.service.AccountService
 import secret.news.club.domain.service.RssService
 import secret.news.club.infrastructure.di.ApplicationScope
 import secret.news.club.infrastructure.di.IODispatcher
@@ -24,6 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class GroupOptionViewModel @Inject constructor(
     val rssService: RssService,
+    val accountService: AccountService,
     @MainDispatcher
     private val mainDispatcher: CoroutineDispatcher,
     @IODispatcher

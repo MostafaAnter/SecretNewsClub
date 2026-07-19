@@ -7,6 +7,7 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.UnfoldLess
 import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -124,6 +126,7 @@ fun FeedsPage(
     val filterState = feedsViewModel.filterStateFlow.collectAsStateValue()
     val importantSum = feedsUiState.importantSum
     val sortedGroupWithFeedList = feedsViewModel.sortedGroupWithFeedsListFlow.collectAsStateValue()
+    val setupMessage = feedsViewModel.setupMessageFlow.collectAsStateValue()
     val groupsVisible: SnapshotStateMap<String, Boolean> = feedsUiState.groupsVisible
     val hasGroupVisible by remember(sortedGroupWithFeedList) { derivedStateOf { sortedGroupWithFeedList.fastAny { groupsVisible[it.group.id] == true } } }
 
@@ -319,7 +322,15 @@ fun FeedsPage(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    itemsIndexed(sortedGroupWithFeedList) { _, (group, feeds) ->
+                    if (sortedGroupWithFeedList.all { it.feeds.isEmpty() }) {
+                        item {
+                            FeedsEmptyState(setupMessage = setupMessage)
+                        }
+                    } else {
+                    itemsIndexed(
+                        sortedGroupWithFeedList,
+                        key = { _, groupWithFeed -> groupWithFeed.group.id },
+                    ) { _, (group, feeds) ->
 
                         GroupWithFeedsContainer {
                             GroupItem(isExpanded = {
@@ -376,6 +387,7 @@ fun FeedsPage(
                                     })
                             }
                         }
+                    }
                     }
 
                     item {
@@ -448,6 +460,40 @@ private fun filterChange(
     if (isNavigate) {
         navController.navigate(RouteName.FLOW) {
             launchSingleTop = true
+        }
+    }
+}
+
+/**
+ * Shown in place of the feed list while it's empty. On first launch (or right after a
+ * country change) that's almost always because default-feed discovery/subscription is
+ * still running in the background, not because something's broken — [setupMessage] surfaces
+ * that ongoing work so the page doesn't just look blank.
+ */
+@Composable
+private fun FeedsEmptyState(setupMessage: String?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (setupMessage != null) {
+            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = setupMessage,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.no_feeds_yet),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

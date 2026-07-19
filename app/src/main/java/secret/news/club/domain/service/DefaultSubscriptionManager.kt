@@ -73,11 +73,16 @@ class DefaultSubscriptionManager @Inject constructor(
     ) {
         subscriptionJob?.cancel()
         subscriptionJob = applicationScope.launch {
+            // Set on every run, not just the country-change one below — this function
+            // re-runs whenever discoveredFeedDao emits again for the same country (e.g.
+            // once RssDiscoveryWorker's results land after the initial, usually-empty
+            // pass), and that later pass is often the slower one doing real network
+            // subscribes. Gating this behind `countryChanged` left it running silently.
+            _message.value = context.getString(R.string.updating_feeds)
 
             val countryChanged = resolvedCountryCode != lastCountryCode
             if (countryChanged) {
                 lastCountryCode = resolvedCountryCode
-                _message.value = context.getString(R.string.updating_feeds)
                 // Existing destructive behavior: switching country wipes feeds.
                 // Don't fire on mere discovered-feed arrivals — only on actual
                 // country changes — or we'd kill the user's current subscriptions

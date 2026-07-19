@@ -18,6 +18,7 @@ import secret.news.club.BuildConfig
 import secret.news.club.domain.data.DiffMapHolder
 import secret.news.club.domain.service.AccountService
 import secret.news.club.domain.service.AppService
+import secret.news.club.domain.service.CrashReportingService
 import secret.news.club.domain.service.LocalRssService
 import secret.news.club.domain.service.OpmlService
 import secret.news.club.domain.service.PushAnalyticsService
@@ -120,6 +121,9 @@ class AndroidApp : Application(), Configuration.Provider {
     @Inject
     lateinit var pushAnalyticsService: PushAnalyticsService
 
+    @Inject
+    lateinit var crashReportingService: CrashReportingService
+
     /**
      * When the application startup.
      *
@@ -130,7 +134,7 @@ class AndroidApp : Application(), Configuration.Provider {
      */
     override fun onCreate() {
         super.onCreate()
-        CrashHandler(this)
+        CrashHandler(this, crashReportingService)
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }

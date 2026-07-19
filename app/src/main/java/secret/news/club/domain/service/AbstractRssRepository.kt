@@ -178,10 +178,15 @@ abstract class AbstractRssRepository(
         SyncWorker.cancelOneTimeWork(workManager)
     }
 
-    open fun doSyncOneTime(feedId: String? = null, groupId: String? = null) {
+    open fun doSyncOneTime(
+        feedId: String? = null,
+        groupId: String? = null,
+        userInitiated: Boolean = true,
+    ) {
         SyncWorker.enqueueOneTimeWork(
             workManager,
-            workDataOf("feedId" to feedId, "groupId" to groupId)
+            workDataOf("feedId" to feedId, "groupId" to groupId),
+            userInitiated = userInitiated,
         )
     }
 
@@ -189,7 +194,7 @@ abstract class AbstractRssRepository(
         accountService.getCurrentAccount().let {
             val syncOnStart = it.syncOnStart.value
             if (syncOnStart) {
-                doSyncOneTime()
+                doSyncOneTime(userInitiated = false)
             }
             if (it.syncInterval.value != SyncIntervalPreference.Manually.value) {
                 SyncWorker.enqueuePeriodicWork(

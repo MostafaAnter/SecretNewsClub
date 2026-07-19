@@ -29,7 +29,7 @@ import java.util.*
         ArchivedArticle::class,
         DiscoveredFeedEntity::class,
     ],
-    version = 8,
+    version = 9,
     autoMigrations = [
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 5, to = 7),
@@ -91,6 +91,7 @@ val allMigrations = arrayOf(
     MIGRATION_3_4,
     MIGRATION_4_5,
     MIGRATION_7_8,
+    MIGRATION_8_9,
 )
 
 @Suppress("ClassName")
@@ -204,6 +205,32 @@ object MIGRATION_7_8 : Migration(7, 8) {
         )
         database.execSQL(
             "CREATE INDEX IF NOT EXISTS `index_discovered_feed_contentFingerprint` ON `discovered_feed` (`contentFingerprint`)"
+        )
+    }
+}
+
+/**
+ * Adds composite indices on `article` matching the filtered-count and paged-article-list
+ * query shapes (accountId+isUnread/isStarred, feedId+isUnread/isStarred). Those queries were
+ * doing a full table scan of `article` on every Feeds-page load and every Flow-page paging
+ * fetch — the more articles a user has cached, the slower every scroll/refresh got. Purely
+ * additive (CREATE INDEX only), so existing data/tables are untouched.
+ */
+@Suppress("ClassName")
+object MIGRATION_8_9 : Migration(8, 9) {
+
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_article_accountId_isUnread` ON `article` (`accountId`, `isUnread`)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_article_accountId_isStarred` ON `article` (`accountId`, `isStarred`)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_article_feedId_isUnread` ON `article` (`feedId`, `isUnread`)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_article_feedId_isStarred` ON `article` (`feedId`, `isStarred`)"
         )
     }
 }

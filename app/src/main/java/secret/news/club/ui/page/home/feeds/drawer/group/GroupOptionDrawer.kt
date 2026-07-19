@@ -228,7 +228,7 @@ private fun Preset(
         ) {
             viewModel.showClearDialog()
         }
-        if (viewModel.rssService.get().deleteSubscription && group?.id != context.currentAccountId.getDefaultGroupId()) {
+        if (viewModel.rssService.get().deleteSubscription && group?.id != viewModel.accountService.getCurrentAccountId().getDefaultGroupId()) {
             RYSelectionChip(
                 modifier = Modifier.animateContentSize(),
                 content = stringResource(R.string.delete_group),

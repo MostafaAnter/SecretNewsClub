@@ -31,6 +31,7 @@ import secret.news.club.domain.model.account.Account
 import secret.news.club.domain.model.general.Filter
 import secret.news.club.domain.model.group.GroupWithFeed
 import secret.news.club.domain.service.AccountService
+import secret.news.club.domain.service.DefaultSubscriptionManager
 import secret.news.club.domain.service.RssService
 import secret.news.club.infrastructure.android.AndroidStringsHelper
 import secret.news.club.domain.data.DiffMapHolder
@@ -65,13 +66,20 @@ class FeedsViewModel @Inject constructor(
     private val filterStateUseCase: FilterStateUseCase,
     private val groupWithFeedsListUseCase: GroupWithFeedsListUseCase,
     private val topFeedUseCase: TopFeedUseCase,
+    private val defaultSubscriptionManager: DefaultSubscriptionManager,
 ) : ViewModel() {
 
     private val _feedsUiState =
         MutableStateFlow(FeedsUiState())
     val feedsUiState: StateFlow<FeedsUiState> = _feedsUiState.asStateFlow()
 
-    val syncWorkLiveData = workManager.getWorkInfosByTagLiveData(SyncWorker.WORK_TAG)
+    val syncWorkLiveData = workManager.getWorkInfosByTagLiveData(SyncWorker.USER_SYNC_TAG)
+
+    /** Surfaces default-feed setup progress (first launch / country change) as persistent
+     * text on FeedsPage's empty state, instead of relying solely on the transient Toast
+     * shown elsewhere — so the user isn't left looking at a blank screen wondering if
+     * anything is happening. */
+    val setupMessageFlow: StateFlow<String?> = defaultSubscriptionManager.message
 
     val filterStateFlow = filterStateUseCase.filterStateFlow
     val groupWithFeedsListFlow = groupWithFeedsListUseCase.groupWithFeedListFlow

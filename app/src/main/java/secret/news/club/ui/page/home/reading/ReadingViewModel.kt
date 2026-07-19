@@ -9,6 +9,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,8 @@ class ReadingViewModel @AssistedInject constructor(
         get() = readingUiState.value.articleWithFeed?.article
     private val currentFeed: Feed?
         get() = readingUiState.value.articleWithFeed?.feed
+
+    private var contentFetchJob: Job? = null
 
     init {
         initData(initialArticleId, initialListIndex)
@@ -168,6 +171,7 @@ class ReadingViewModel @AssistedInject constructor(
     }
 
     fun renderFullContent() {
+        contentFetchJob?.cancel()
         val fetchJob = viewModelScope.launch {
             readerCacheHelper.readOrFetchFullContent(
                 currentArticle!!
@@ -177,6 +181,7 @@ class ReadingViewModel @AssistedInject constructor(
                 _readerState.update { it.copy(content = ReaderState.Error(th.message.toString())) }
             }
         }
+        contentFetchJob = fetchJob
         viewModelScope.launch {
             delay(100L)
             if (fetchJob.isActive) {
@@ -223,6 +228,8 @@ class ReadingViewModel @AssistedInject constructor(
         }
         var previousArticle: ReaderState.PrefetchResult? = null
         var nextArticle: ReaderState.PrefetchResult? = null
+        var previousArticleFull: Article? = null
+        var nextArticleFull: Article? = null
 
         if (index != -1 || currentId == null) {
             val prevIterator = items.listIterator(index)
@@ -233,6 +240,7 @@ class ReadingViewModel @AssistedInject constructor(
                     previousArticle = ReaderState.PrefetchResult(
                         articleId = prev.articleWithFeed.article.id, index = previousIndex
                     )
+                    previousArticleFull = prev.articleWithFeed.article
                     break
                 }
             }
@@ -244,14 +252,31 @@ class ReadingViewModel @AssistedInject constructor(
                     nextArticle = ReaderState.PrefetchResult(
                         articleId = next.articleWithFeed.article.id, index = nextIndex
                     )
+                    nextArticleFull = next.articleWithFeed.article
                     break
                 }
             }
         }
 
+        prefetchAdjacentFullContent(previousArticleFull, nextArticleFull)
+
         return copy(
             nextArticle = nextArticle, previousArticle = previousArticle, listIndex = index
         )
+    }
+
+    /**
+     * Warms the on-disk full-content cache for the articles either side of the one just
+     * opened, so swiping to the next/previous article in ReadingPage usually hits the cache
+     * instead of showing [ReaderState.Loading] while a fresh fetch+parse runs. Runs on the
+     * app-wide scope so it isn't cancelled by quick back-and-forth navigation between articles.
+     */
+    private fun prefetchAdjacentFullContent(previous: Article?, next: Article?) {
+        listOfNotNull(previous, next).forEach { article ->
+            applicationScope.launch(ioDispatcher) {
+                readerCacheHelper.checkOrFetchFullContent(article)
+            }
+        }
     }
 
     fun loadPrevious(): Boolean {

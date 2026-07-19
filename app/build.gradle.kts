@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 fun fetchGitCommitHash(): String {
@@ -60,6 +61,12 @@ android {
         }
         create("fdroid") {
             dimension = "channel"
+            // No Crashlytics dependency on this flavor (see Firebase deps below) and no
+            // mapping-file upload either — F-Droid's build servers are offline, and a
+            // network call here would break their reproducible build.
+            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                mappingFileUploadEnabled = false
+            }
         }
         create("googlePlay") {
             dimension = "channel"
@@ -193,13 +200,15 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     implementation(libs.play.services.ads)
 
-    // Firebase (push + analytics) — excluded from the fdroid flavor: F-Droid's
-    // inclusion policy forbids proprietary/tracking libraries.
+    // Firebase (push + analytics + crash reporting) — excluded from the fdroid flavor:
+    // F-Droid's inclusion policy forbids proprietary/tracking libraries.
     "githubImplementation"(platform(libs.firebase.bom))
     "githubImplementation"(libs.firebase.messaging.ktx)
     "githubImplementation"(libs.firebase.analytics.ktx)
+    "githubImplementation"(libs.firebase.crashlytics.ktx)
 
     "googlePlayImplementation"(platform(libs.firebase.bom))
     "googlePlayImplementation"(libs.firebase.messaging.ktx)
     "googlePlayImplementation"(libs.firebase.analytics.ktx)
+    "googlePlayImplementation"(libs.firebase.crashlytics.ktx)
 }

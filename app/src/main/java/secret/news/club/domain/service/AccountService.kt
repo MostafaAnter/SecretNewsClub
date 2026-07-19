@@ -59,11 +59,17 @@ constructor(
 
     fun getAccountById(accountId: Int): Flow<Account?> = accountDao.queryAccount(accountId)
 
-    fun getCurrentAccount(): Account = runBlocking {
+    /**
+     * [currentAccountFlow] is an eagerly-collected [kotlinx.coroutines.flow.StateFlow], so its
+     * cached [StateFlow.value] is almost always ready — reading it directly avoids paying
+     * dispatcher/suspension overhead on every single call. Only falls back to blocking for the
+     * brief cold-start window before the underlying DataStore read has delivered its first value.
+     */
+    fun getCurrentAccount(): Account = currentAccountFlow.value ?: runBlocking {
         currentAccountFlow.first { it != null } as Account
     }
 
-    fun getCurrentAccountId(): Int = runBlocking {
+    fun getCurrentAccountId(): Int = currentAccountIdFlow.value ?: runBlocking {
         currentAccountIdFlow.first { it != null } as Int
     }
 
