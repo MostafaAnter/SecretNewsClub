@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.util.Consumer
@@ -35,7 +33,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 import secret.news.club.domain.service.AccountService
 import secret.news.club.domain.service.ArticleUrlResolver
-import secret.news.club.domain.service.DefaultSubscriptionManager
 import secret.news.club.domain.service.PushAnalyticsService
 import secret.news.club.infrastructure.compose.ProvideCompositionLocals
 import secret.news.club.infrastructure.preference.AccountSettingsProvider
@@ -55,8 +52,6 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var settingsProvider: SettingsProvider
 
     @Inject lateinit var accountService: AccountService
-
-    @Inject lateinit var defaultSubscriptionManager: DefaultSubscriptionManager
 
     @Inject lateinit var articleUrlResolver: ArticleUrlResolver
 
@@ -103,16 +98,6 @@ class MainActivity : AppCompatActivity() {
                 settingsProvider.ProvidesSettings {
                     val subscribeViewModel: SubscribeViewModel = hiltViewModel()
                     val navController = rememberNavController()
-
-                    LaunchedEffect(Unit) {
-                        lifecycleScope.launch {
-                            defaultSubscriptionManager.message.collect { message ->
-                                message?.let {
-                                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    }
 
                     ProvideCompositionLocals {
                         HomeEntry(
