@@ -14,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import secret.news.club.R
+import secret.news.club.domain.model.article.Article
 import secret.news.club.domain.model.feed.FeedWithArticle
 import secret.news.club.ui.page.common.ExtraName
 import secret.news.club.ui.page.common.NotificationGroupName
@@ -24,6 +25,9 @@ class NotificationHelper @Inject constructor(
     private val context: Context,
     private val okHttpClient: OkHttpClient,
 ) {
+    companion object {
+        private const val MAX_NOTIFICATIONS_PER_FEED = 3
+    }
 
     private val notificationManager: NotificationManagerCompat =
         NotificationManagerCompat.from(context).apply {
@@ -65,56 +69,87 @@ class NotificationHelper @Inject constructor(
             )
         )
 
-        // Stable per-feed id: re-notifying the same feed replaces the previous
-        // notification instead of stacking a new one, on top of the coalescing below.
-        val notificationId = feedWithArticle.feed.id.hashCode()
-        val latestArticle = articles.first()
+        if (articles.size == 1) {
+            val article = articles.first()
+            notificationManager.notify(
+                article.id.hashCode(),
+                articleNotificationBuilder(feedWithArticle, article, groupKey = null)
+                    .setContentTitle(article.title)
+                    .setStyle(
+                        NotificationCompat.BigTextStyle()
+                            .bigText(article.shortDescription)
+                            .setSummaryText(feedWithArticle.feed.name)
+                    )
+                    .build()
+            )
+            return
+        }
+
+        // Multiple new articles from the same feed: post one notification per article
+        // (each individually expandable to its own full description via BigTextStyle),
+        // grouped so the shade still collapses them into a single card by default —
+        // expanding that group reveals each article's own, separately-expandable entry.
+        // Capped to match the summary's own line cap below.
+        val groupKey = feedWithArticle.feed.id
+        articles.take(MAX_NOTIFICATIONS_PER_FEED).forEach { article ->
+            notificationManager.notify(
+                article.id.hashCode(),
+                articleNotificationBuilder(feedWithArticle, article, groupKey = groupKey)
+                    .setContentTitle(article.title)
+                    .setStyle(
+                        NotificationCompat.BigTextStyle()
+                            .bigText(article.shortDescription)
+                            .setSummaryText(feedWithArticle.feed.name)
+                    )
+                    .build()
+            )
+        }
+
+        // Stable per-feed id: re-notifying the same feed replaces the previous summary
+        // instead of stacking a new one.
+        val summaryBuilder = articleNotificationBuilder(feedWithArticle, articles.first(), groupKey = groupKey)
+            .setGroupSummary(true)
+            .setContentTitle(feedWithArticle.feed.name)
+            .setContentText(
+                context.resources.getQuantityString(
+                    R.plurals.new_articles_notification,
+                    articles.size,
+                    articles.size
+                )
+            )
+            .setStyle(
+                // Note: InboxStyle declares its own member fun named `apply`, which
+                // shadows kotlin.apply via SAM conversion — build it via plain chaining.
+                NotificationCompat.InboxStyle()
+                    .setBigContentTitle(feedWithArticle.feed.name)
+                    .setSummaryText(feedWithArticle.feed.name)
+                    .also { style -> articles.take(MAX_NOTIFICATIONS_PER_FEED).forEach { style.addLine(it.title) } }
+            )
+
+        notificationManager.notify(feedWithArticle.feed.id.hashCode(), summaryBuilder.build())
+    }
+
+    private fun articleNotificationBuilder(
+        feedWithArticle: FeedWithArticle,
+        article: Article,
+        groupKey: String?,
+    ): NotificationCompat.Builder {
         val contentIntent = PendingIntent.getActivity(
             context,
-            notificationId,
+            article.id.hashCode(),
             Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra(ExtraName.ARTICLE_ID, latestArticle.id)
+                putExtra(ExtraName.ARTICLE_ID, article.id)
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val builder = NotificationCompat.Builder(context, NotificationGroupName.ARTICLE_UPDATE)
+        return NotificationCompat.Builder(context, NotificationGroupName.ARTICLE_UPDATE)
             .setSmallIcon(R.drawable.ic_launcher_round)
             .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_round))
             .setContentIntent(contentIntent)
-            .setGroup(feedWithArticle.feed.id)
             .setAutoCancel(true)
-
-        if (articles.size == 1) {
-            builder
-                .setContentTitle(latestArticle.title)
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText(latestArticle.shortDescription)
-                        .setSummaryText(feedWithArticle.feed.name)
-                )
-        } else {
-            builder
-                .setContentTitle(feedWithArticle.feed.name)
-                .setContentText(
-                    context.resources.getQuantityString(
-                        R.plurals.new_articles_notification,
-                        articles.size,
-                        articles.size
-                    )
-                )
-                .setStyle(
-                    // Note: InboxStyle declares its own member fun named `apply`, which
-                    // shadows kotlin.apply via SAM conversion — build it via plain chaining.
-                    NotificationCompat.InboxStyle()
-                        .setBigContentTitle(feedWithArticle.feed.name)
-                        .setSummaryText(feedWithArticle.feed.name)
-                        .also { style -> articles.take(5).forEach { style.addLine(it.title) } }
-                )
-        }
-
-        notificationManager.notify(notificationId, builder.build())
+            .apply { groupKey?.let { setGroup(it) } }
     }
 
     /**
