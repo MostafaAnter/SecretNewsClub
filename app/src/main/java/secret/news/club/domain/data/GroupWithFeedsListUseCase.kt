@@ -39,6 +39,16 @@ class GroupWithFeedsListUseCase @Inject constructor(
 
     private var currentJob: Job? = null
 
+    private val _groupWithFeedsListFlow: MutableStateFlow<List<GroupWithFeed>> =
+        MutableStateFlow<List<GroupWithFeed>>(emptyList())
+    val groupWithFeedListFlow: StateFlow<List<GroupWithFeed>> = _groupWithFeedsListFlow
+
+    private val feedsFlow: MutableStateFlow<List<GroupWithFeed>> = MutableStateFlow(emptyList())
+
+    private val defaultGroupId get() = accountService.getCurrentAccountId().getDefaultGroupId()
+
+    private val hideEmptyGroups get() = settingsProvider.settings.hideEmptyGroups.value
+
     init {
         val accountFlow = accountService.currentAccountFlow.mapNotNull { it }
         applicationScope.launch {
@@ -60,16 +70,6 @@ class GroupWithFeedsListUseCase @Inject constructor(
                 }
         }
     }
-
-    private val _groupWithFeedsListFlow: MutableStateFlow<List<GroupWithFeed>> =
-        MutableStateFlow<List<GroupWithFeed>>(emptyList())
-    val groupWithFeedListFlow: StateFlow<List<GroupWithFeed>> = _groupWithFeedsListFlow
-
-    private val feedsFlow: MutableStateFlow<List<GroupWithFeed>> = MutableStateFlow(emptyList())
-
-    private val defaultGroupId get() = accountService.getCurrentAccountId().getDefaultGroupId()
-
-    private val hideEmptyGroups get() = settingsProvider.settings.hideEmptyGroups.value
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun pullAllFeeds(): Job {

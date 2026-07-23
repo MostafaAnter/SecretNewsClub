@@ -27,6 +27,11 @@ class NotificationHelper @Inject constructor(
 ) {
     companion object {
         private const val MAX_NOTIFICATIONS_PER_FEED = 3
+
+        // Large icons are displayed at a small fixed size by the system; decoding source
+        // images (which can be full-resolution article photos) at their native resolution
+        // can allocate tens of MB per notification and blow the app's heap budget.
+        private const val LARGE_ICON_MAX_DIMENSION_PX = 256
     }
 
     private val notificationManager: NotificationManagerCompat =
@@ -192,8 +197,24 @@ class NotificationHelper @Inject constructor(
     }
 
     private fun fetchBitmap(url: String): Bitmap? = runCatching {
-        okHttpClient.newCall(Request.Builder().url(url).build()).execute().use { response ->
-            response.body.byteStream().use { BitmapFactory.decodeStream(it) }
+        val bytes = okHttpClient.newCall(Request.Builder().url(url).build()).execute().use { response ->
+            response.body.bytes()
         }
+        decodeSampledBitmap(bytes, LARGE_ICON_MAX_DIMENSION_PX)
     }.getOrNull()
+
+    private fun decodeSampledBitmap(bytes: ByteArray, maxDimensionPx: Int): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+
+        var inSampleSize = 1
+        while (bounds.outWidth / (inSampleSize * 2) >= maxDimensionPx &&
+            bounds.outHeight / (inSampleSize * 2) >= maxDimensionPx
+        ) {
+            inSampleSize *= 2
+        }
+
+        val options = BitmapFactory.Options().apply { this.inSampleSize = inSampleSize }
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+    }
 }

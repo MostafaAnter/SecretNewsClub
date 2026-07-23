@@ -23,9 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.size.Size
 import secret.news.club.R
 import secret.news.club.infrastructure.preference.OpenLinkPreference
 import secret.news.club.ui.component.base.RYAsyncImage
@@ -98,12 +100,14 @@ private fun SponsorItem(
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val avatarSizePx = with(LocalDensity.current) { 64.dp.roundToPx() }
         RYAsyncImage(
             data = model,
             modifier = Modifier
                 .size(64.dp)
                 .aspectRatio(1f)
                 .clip(CircleShape),
+            size = Size(avatarSizePx, avatarSizePx),
             contentScale = ContentScale.Crop,
         )
         Column(
